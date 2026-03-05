@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "commonjs",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "src/**/*",
+    "src/ui/types/electron.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

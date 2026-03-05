@@ -1,0 +1,58 @@
+# === Dependencies ===
+node_modules/
+.pnpm-store/
+
+# === Build & Output ===
+# Vite
+dist/
+.vite/
+
+# Electron Forge / Builder
+out/
+release/
+build/Release
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
+*.zip
+*.tar.gz
+*.yml
+*.blockmap
+
+# === User Data (DO NOT COMMIT) ===
+# electron-store settings
+user-settings.json
+*.json.old
+
+# === Environment & Secrets ===
+.env
+.env.local
+.env.*.local
+
+# === Logs & Debug ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# === TypeScript ===
+*.tsbuildinfo
+
+# === IDE & OS ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Cache ===
+.cache/
+*.swp
+*.swo
+*~
