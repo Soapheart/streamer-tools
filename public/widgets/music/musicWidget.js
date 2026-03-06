@@ -1,7 +1,7 @@
 let lastText = "";
 
 // Подключение к локальному WebSocket-серверу
-const ws = new WebSocket("ws://127.0.0.1:4455");
+const ws = new WebSocket("ws://127.0.0.1:3000/ws/music");
 
 // Когда получаем новое сообщение
 ws.onmessage = (event) => {

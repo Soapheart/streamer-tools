@@ -1,0 +1,19 @@
+body {
+    text-align:center;
+    width:200px;
+    background: linear-gradient(0deg, #1a1a1a, #121212);
+    color: #e6e6e6;
+    font-family: roboto, sans-serif;
+    padding: 0px 6px 12px 6px;
+}
+
+button {
+    width:100%;
+    color:rgb(24, 24, 24);
+    background: #fbd450;
+    border-width:0px;
+    border-radius:20px;
+    padding:5px;
+    font-weight: bold;
+    cursor:pointer;
+}
