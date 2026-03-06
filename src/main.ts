@@ -5,11 +5,23 @@ import cors from 'cors';
 import http from 'http';
 
 //Адаптер для работы с electron-store и транспорты для IPC
-import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
 import { registerSettingsHandlers } from './transports/ipc/settings';
+import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
+import { WidgetAdapter } from './core/ports/WidgetPort';
+import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
+import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
+import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
+import { WebSocketServer } from 'ws';
 
 
 let storage: ElectronStoreAdapter;
+
+// === Реестр виджетов ===
+const widgetAdapters: WidgetAdapter[] = [
+  new MusicWidgetAdapter(),
+  new ChatWidgetAdapter(),
+  new AuctionWidgetAdapter(),
+];
 
 
 // Инициализация Express сервера для виджетов OBS
@@ -24,18 +36,26 @@ function startWidgetServer() {
   });
 
   // Раздача статических файлов для виджетов
-  widgetApp.use('/widgets', express.static(path.join(__dirname, '../../public/widgets')));
+  const widgetsPath = path.join(process.cwd(), 'public', 'widgets');
+  widgetApp.use('/widgets', express.static(widgetsPath));
 
   const server = http.createServer(widgetApp);
-  const PORT = 3000;
+  const wss = new WebSocketServer({ server });
 
+
+  widgetAdapters.forEach(adapter => {
+    console.log(`🔌 Setting up widget adapter: ${adapter.path}`);
+    adapter.setup(wss);
+  });
+
+  const PORT = 3000;
   server.listen(PORT, '127.0.0.1', () => {
     console.log(`🚀 Widget server running at http://127.0.0.1:${PORT}`);
   }).on('error', (err) => {
     console.error('❌ Widget server error:', err);
   });
 
-  return server;
+  return { server, wss };
 }
 
 function createWindow() {

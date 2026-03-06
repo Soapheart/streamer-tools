@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { ExternalLinkButton } from '../ExternalLinkButton';
 import { MusicWidgetConfig } from '../../../shared/types';
+import { WIDGET_URLS } from '../../../shared/widgetUrls';
 
 type ThemeValue = MusicWidgetConfig['theme'];
 type PositionValue = MusicWidgetConfig['position'];
@@ -35,7 +36,7 @@ export const MusicSettings: React.FC = () => {
             variant="primary"
           />
           <ExternalLinkButton
-            url="localhost:3000/test-extension"
+            url={WIDGET_URLS.music}
             label="Скопировать ссылку на виджет"
             action='copy'
             icon={<span>🎷</span>}
