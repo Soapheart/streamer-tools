@@ -18,6 +18,6 @@
   "include": [
     "src/**/*",
     "src/ui/types/electron.d.ts"
-  ],
+, "public/widgets/music/widget.js"  ],
   "exclude": ["node_modules", "dist"]
 }
