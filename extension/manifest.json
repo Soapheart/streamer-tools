@@ -10,7 +10,9 @@
 
   "host_permissions": [
     "https://music.yandex.ru/*",
-    "https://music.yandex.com/*"
+    "https://music.yandex.com/*",
+    "https://vk.ru/*",
+    "https://vk.com/*"
   ],
 
   "background": {
@@ -22,7 +24,9 @@
     {
       "matches": [
         "https://music.yandex.ru/*",
-        "https://music.yandex.com/*"
+        "https://music.yandex.com/*",
+        "https://vk.ru/*",
+        "https://vk.com/*"
       ],
       "js": ["content.js"]
     }
