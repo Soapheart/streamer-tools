@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { MusicSettings } from './MusicSettings';
+import { AboutSettings } from './AboutSettings';
 
 // Заглушки для будущих категорий
 const PlaceholderSettings: React.FC<{ title: string }> = ({ title }) => (
@@ -22,11 +23,13 @@ export const SettingsPanel: React.FC = () => {
         return <PlaceholderSettings title="Чат" />;
       case 'auction':
         return <PlaceholderSettings title="Аукцион" />;
+      case 'about':
+        return <AboutSettings />;
       default:
         return (
           <div className="text-gray-300">
             <h3 className="text-lg font-semibold mb-4">Общие настройки</h3>
-            <p>Здесь будут общие настройки приложения...</p>
+            <p>Общие настройки приложения.</p>
                   <div className="flex items-center justify-start mt-4 space-x-3">
                     <input
                       type="checkbox"

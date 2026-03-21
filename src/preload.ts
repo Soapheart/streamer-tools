@@ -6,8 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // === Открытие внешних ссылок ===
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
-
-    // === Настройки — ВАЖНО: правильный синтаксис ===
+  // === Настройки (сохранение/загрузка) ===
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     save: (settings: unknown) => ipcRenderer.invoke('settings:save', settings),
@@ -17,5 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.send('settings:subscribe');
       return () => ipcRenderer.removeListener('settings:updated', listener);
     },
+  },
+  widget: {
+    updateSettings: (widget: string, settings: unknown) => 
+      ipcRenderer.send('widget:settings:update', { widget, settings }),
   },
 });

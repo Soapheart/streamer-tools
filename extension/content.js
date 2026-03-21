@@ -62,7 +62,6 @@ const strategies = {
       const artist = artistEl.lastChild?.textContent.trim() || artistEl.textContent.trim();
       const cover = coverImg ? coverImg.getAttribute('src') : null;
       let bg = null;
-      console.log("VK Data:", { cover });
       return { title, artist, cover, background_color: bg, platform: "vk" };
     }
   }

@@ -7,6 +7,9 @@ export interface ElectronAPI {
     save: (settings: PartialSettings) => Promise<void>;
     subscribe: (callback: (settings: AppSettings) => void) => () => void;
   };
+  widget: {
+    updateSettings: (widget: string, settings: unknown) => void;
+  };
 }
 
 declare global {

@@ -5,53 +5,53 @@ import { MusicWidgetConfig } from '../../../shared/types';
 import { WIDGET_URLS } from '../../../shared/widgetUrls';
 
 type ThemeValue = MusicWidgetConfig['theme'];
-type PositionValue = MusicWidgetConfig['position'];
 type IntegrationKey = keyof MusicWidgetConfig['integrations'];
-
 
 export const MusicSettings: React.FC = () => {
   const { settings, updateSettings } = useDashboardStore();
   const music = settings.music;
 
-    // Обработчик для радио-кнопок интеграций
   const handleIntegrationChange = (selected: IntegrationKey) => {
     updateSettings('music', {
       integrations: {
-        yandexMusic: selected === 'yandexMusic',
-        vkMusic: selected === 'vkMusic',
-      },
+        ...music.integrations,
+        [selected]: !music.integrations[selected]
+      }
     });
   };
 
   return (
     <div className="space-y-6">
-
+      {/* Блок с расширением и ссылкой на виджет */}
       <div className="text-gray-300">
-        <p>Для того чтобы виджет получал информацию о текущей песне, убедитесь что вы установили браузерное расширение по ссылке ниже.</p>
-        <div className="my-4 flex flex-wrap items-center gap-4">
+        <p>
+          Для работы виджета установите расширение и настройте источник в OBS.
+        </p>
+        <div className="my-4 flex flex-wrap gap-3">
           <ExternalLinkButton
             url="https://chromewebstore.google.com/detail/your-extension-id"
             label="Установить расширение"
             icon={<span>🧩</span>}
+            action="open"
             variant="primary"
           />
           <ExternalLinkButton
             url={WIDGET_URLS.music}
             label="Скопировать ссылку на виджет"
-            action='copy'
             icon={<span>🎷</span>}
+            action="copy"
             variant="secondary"
           />
         </div>
       </div>
 
-      {/* Выбор интеграции (радио-кнопки) */}
-      <div className="flex flex-col items-start justify-start mt-4 space-x-4">
-        <label className="text-gray-200">Интеграция</label>
+      {/* Выбор интеграции */}
+      <div className="flex flex-col items-start justify-start mt-4 space-y-2">
+        <label className="text-gray-200 font-medium">Источники музыки</label>
         <div className="flex items-center space-x-4">
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
-              type="radio"
+              type="checkbox"
               name="musicIntegration"
               checked={music.integrations.yandexMusic}
               onChange={() => handleIntegrationChange('yandexMusic')}
@@ -61,7 +61,7 @@ export const MusicSettings: React.FC = () => {
           </label>
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
-              type="radio"
+              type="checkbox"
               name="musicIntegration"
               checked={music.integrations.vkMusic}
               onChange={() => handleIntegrationChange('vkMusic')}
@@ -72,42 +72,27 @@ export const MusicSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* <div className="flex items-center justify-start mt-4 space-x-3">
-        <label className="text-gray-200">Включить виджет</label>
+      {/* Показывать обложку */}
+      <div className="flex items-center justify-start space-x-3">
         <input
           type="checkbox"
-          checked={music.enabled}
-          onChange={(e) => updateSettings('music', { enabled: e.target.checked })}
-          className="w-5 h-5 rounded"
-        />
-      </div> */}
-
-      <div className="flex items-center justify-start mt-4 space-x-3">
-        <input
-          type="checkbox"
+          id="showCover"
           checked={music.showCover}
           onChange={(e) => updateSettings('music', { showCover: e.target.checked })}
-          className="w-5 h-5 rounded"
+          className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500"
         />
-        <label className="text-gray-200">Показывать обложку</label>
+        <label htmlFor="showCover" className="text-gray-200 cursor-pointer">
+          Показывать обложку (если доступна)
+        </label>
       </div>
 
-      {/* <div className="flex items-center justify-start mt-4 space-x-3">
-        <label className="text-gray-200">Показывать прогресс</label>
-        <input
-          type="checkbox"
-          checked={music.showProgress}
-          onChange={(e) => updateSettings('music', { showProgress: e.target.checked })}
-          className="w-5 h-5 rounded"
-        />
-      </div> */}
-
+      {/* Тема оформления */}
       <div>
-        <label className="text-gray-200 block mb-2">Тема</label>
+        <label className="text-gray-200 block mb-2 font-medium">Тема</label>
         <select
           value={music.theme}
           onChange={(e) => updateSettings('music', { theme: e.target.value as ThemeValue })}
-          className="w-full bg-gray-700 text-white rounded px-3 py-2"
+          className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         >
           <option value="dynamic">Динамическая (по обложке)</option>
           <option value="dark">Тёмная</option>
@@ -116,9 +101,28 @@ export const MusicSettings: React.FC = () => {
         </select>
       </div>
 
+      {/* Прозрачность фона */}
       <div>
-        <label className="text-gray-200 block mb-2">
-          Размер шрифта: {music.fontSize}px
+        <label className="text-gray-200 block mb-2 font-medium">
+          Прозрачность фона: <span className="text-purple-400">{music.bgTransparency}%</span>
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={music.bgTransparency}
+          onChange={(e) => updateSettings('music', { bgTransparency: Number(e.target.value) })}
+          className="w-full accent-purple-600"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          0% = полностью непрозрачный, 100% = прозрачный фон
+        </p>
+      </div>
+
+      {/* Размер шрифта */}
+      <div>
+        <label className="text-gray-200 block mb-2 font-medium">
+          Размер шрифта: <span className="text-purple-400">{music.fontSize}px</span>
         </label>
         <input
           type="range"
@@ -126,22 +130,20 @@ export const MusicSettings: React.FC = () => {
           max="24"
           value={music.fontSize}
           onChange={(e) => updateSettings('music', { fontSize: Number(e.target.value) })}
-          className="w-full"
+          className="w-full accent-purple-600"
         />
       </div>
 
-      <div>
-        <label className="text-gray-200 block mb-2">Позиция в OBS</label>
-        <select
-          value={music.position}
-          onChange={(e) => updateSettings('music', { position: e.target.value as PositionValue })}
-          className="w-full bg-gray-700 text-white rounded px-3 py-2"
-        >
-          <option value="top-left">Верхний левый</option>
-          <option value="top-right">Верхний правый</option>
-          <option value="bottom-left">Нижний левый</option>
-          <option value="bottom-right">Нижний правый</option>
-        </select>
+      {/* Подсказка про размеры в OBS */}
+      <div className="bg-gray-700/50 rounded-lg p-4 text-sm text-gray-400">
+        <p className="flex items-start gap-2">
+          <span>💡</span>
+          <span>
+            <strong>Размер виджета</strong> настраивается в OBS: 
+            кликните правой кнопкой по источнику → «Трансформировать» 
+            или потяните за углы в предпросмотре.
+          </span>
+        </p>
       </div>
     </div>
   );

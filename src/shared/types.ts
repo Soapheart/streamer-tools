@@ -10,12 +10,22 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
   showCover: boolean;
   showProgress: boolean;
   theme: 'dynamic' | 'dark' | 'light' | 'transparent';
+  bgTransparency: number;
   fontSize: number;
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  widgetHeight: number;
+  widgetWidth: number;
   integrations: {
     yandexMusic: boolean;
     vkMusic: boolean;
   };
+}
+
+export interface MusicTrack {
+    title: string;
+    artist: string;
+    cover?: string;
+    background_color?: string;
+    platform?: "vk" | "yandex";
 }
 
 // === Настройки чата ===
@@ -27,6 +37,7 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
 export interface AuctionWidgetConfig extends BaseWidgetConfig {
   // В будущем добавим: duration, startPrice и т.д.
 }
+
 
 // === Полные настройки приложения (для хранения и UI) ===
 export interface AppSettings {

@@ -17,8 +17,9 @@ import { WebSocketServer } from 'ws';
 let storage: ElectronStoreAdapter;
 
 // === Реестр виджетов ===
+const musicAdapter = new MusicWidgetAdapter();
 const widgetAdapters: WidgetAdapter[] = [
-  new MusicWidgetAdapter(),
+  musicAdapter,
   new ChatWidgetAdapter(),
   new AuctionWidgetAdapter(),
 ];
@@ -83,7 +84,6 @@ app.whenReady().then(() => {
   createWindow();
   startWidgetServer();
 
-
   // Инициализация хранилища
   storage = new ElectronStoreAdapter();
   registerSettingsHandlers(storage)
@@ -102,6 +102,14 @@ app.whenReady().then(() => {
     }
   });
 });
+
+ipcMain.on('widget:settings:update', (_event, {widget, settings}) => {
+  console.log('Received widget settings update:', { widget, settings });
+  if( widget === 'music'){
+    musicAdapter.broadcastSettings(settings);
+  }
+})
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

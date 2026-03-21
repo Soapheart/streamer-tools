@@ -1,73 +1,135 @@
 :root {
-  --widget-bg-color: rgba(0, 0, 0, 0.8);
+  /* Базовый цвет фона (RGB) */
+  --widget-bg-rgb: 0, 0, 0;
+  
+  /* Прозрачность: 0 = полностью прозрачный, 1 = непрозрачный */
+  /* Значение по умолчанию: 0.8 (80%) */
+  --bg-transparency: 0.8;
+  
+  /* Цвет с применением прозрачности */
+  --widget-bg-color: rgba(var(--widget-bg-rgb), var(--bg-transparency));
+  --font-size-base: 24px;
+}
+
+/* Темы */
+
+[data-theme="dark"] .widget {
+  --widget-bg-rgb: 20, 20, 30;
+  color: #fff;
+}
+
+[data-theme="light"] .widget {
+  --widget-bg-rgb: 240, 240, 250;
+  color: #222;
+  text-shadow: none;
+}
+
+
+[data-theme="transparent"] .widget {
+  --widget-bg-rgb: 0, 0, 0;
+  --bg-transparency: 0.3;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Динамическая тема (по обложке) — обрабатывается в JS */
+[data-theme="dynamic"] .widget {
+  /* Здесь можно добавить анимацию перехода */
+  transition: background-color 0.3s ease;
 }
 
 body {
-margin: 0;
-font-family: sans-serif;
-color: white;
-background: transparent;
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 12px;
+  margin: 0;
+  font-family: sans-serif;
+  color: white;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
 }
-img {
-    object-fit: cover;
-width: 64px;
-height: 64px;
-border-radius: 6px;
+
+#cover{
+  object-fit: cover;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background-color: rgba(0,0,0,0.2);
+  display: block;
 }
-.widget{
-    user-select: none;
-    height: auto;
-    text-shadow:
-        0 1px 2px rgba(0,0,0,.8),
-        0 0 6px rgba(0,0,0,.6);
-    font-size: 1.5rem;
-    font-weight: bold;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 320px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background-color: var(--widget-bg-color);
-    padding: 8px;
-    border-radius: 8px;
-    -webkit-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
-    -moz-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
-    box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
+#cover.hidden {
+  display: none !important;
+}
+
+.widget {
+  user-select: none;
+  
+  /* ✅ АДАПТИВНАЯ ШИРИНА */
+  width: 100%;
+  max-width: 600px;
+  min-width: 200px;
+  
+  text-shadow:
+    0 1px 2px rgba(0,0,0,.8),
+    0 0 6px rgba(0,0,0,.6);
+  font-size: var(--font-size-base);
+  font-weight: bold;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  /* ✅ ФОН С ПРОЗРАЧНОСТЬЮ */
+  background-color: var(--widget-bg-color);
+  padding: 8px;
+  border-radius: 8px;
+  
+  -webkit-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
+  -moz-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
+  box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
 }
 
 .text-wrapper {
-    position: relative;
-    overflow: hidden;
-    width: 228px;
-    white-space: nowrap;
-    padding: 0 10px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  flex-grow: 1;
+  padding: 0 20px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20px,
+    black calc(100% - 20px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 20px,
+    black calc(100% - 20px),
+    transparent
+  );
 }
-.text-wrapper::before, .text-wrapper::after {
-    z-index: 2;
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 10px;
-    height: 100%;
+
+.title {
 }
-.text-wrapper::before{
-    left: 0;
-    background: linear-gradient(to right, var(--widget-bg-color), rgba(0,0,0,0)), rgba(0,0,0,0);
-}
-.text-wrapper::after{
-    right: 0;
-    background: linear-gradient(to left, var(--widget-bg-color), rgba(0,0,0,0)), rgba(0,0,0,0);
-}
-.title{
-    
-}
-.artist{
-    opacity: 0.8;
-    font-size: 1rem;
+
+.artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px 0 0;
+  opacity: 0.8;
+  font-size: 0..75em;
 }

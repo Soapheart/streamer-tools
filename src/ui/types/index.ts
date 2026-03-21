@@ -1,4 +1,4 @@
-export type WidgetCategory = 'music' | 'chat' | 'auction' | 'general';
+export type WidgetCategory = 'music' | 'chat' | 'auction' | 'general' | 'about';
 
 export interface WidgetSettings {
     music: {

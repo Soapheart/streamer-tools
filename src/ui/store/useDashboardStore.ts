@@ -9,18 +9,20 @@ const defaultSettings: AppSettings = {
     showProgress: true,
     theme: 'dynamic',
     fontSize: 14,
-    position: 'bottom-right',
+    bgTransparency: 100,
+    widgetHeight: 100,
+    widgetWidth: 300,
     integrations: { yandexMusic: true, vkMusic: false },
   },
   chat: { enabled: true },
-  auction: { enabled: true },
+  auction: { enabled: true }
 };
 
 // Состояние стора
 interface DashboardState {
-  activeCategory: 'general' | 'music' | 'chat' | 'auction';
+  activeCategory: 'general' | 'music' | 'chat' | 'auction' | 'about';
   settings: AppSettings;
-  setActiveCategory: (category: 'general' | 'music' | 'chat' | 'auction') => void;
+  setActiveCategory: (category: 'general' | 'music' | 'chat' | 'auction' | 'about') => void;
   updateSettings: <K extends keyof AppSettings>(
     category: K, 
     updates: Partial<AppSettings[K]>
@@ -31,6 +33,23 @@ interface DashboardState {
     _loadFromStorage: () => Promise<void>;
     _subscribeToStorage: () => () => void; // Возвращает функцию отписки
 }
+
+function debounce<T extends (...args: any[]) => void>(
+  func: T, 
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+const debouncedSendToWidget = debounce((category: string, settings: unknown) => {
+  if (category === 'music' && window.electronAPI?.widget?.updateSettings) {
+    window.electronAPI.widget.updateSettings('music', settings);
+  }
+}, 300);
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   activeCategory: 'general',
@@ -46,6 +65,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       };
       // Автосохранение
       get()._saveToStorage({ [category]: updates });
+      debouncedSendToWidget(category, updates);
       return { settings: newSettings };
     });
   },
