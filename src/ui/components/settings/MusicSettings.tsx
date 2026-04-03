@@ -3,6 +3,7 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import { ExternalLinkButton } from '../ExternalLinkButton';
 import { MusicWidgetConfig } from '../../../shared/types';
 import { WIDGET_URLS } from '../../../shared/widgetUrls';
+import { THEME_PRESETS, ThemePreset } from '../../../shared/themes';
 
 type ThemeValue = MusicWidgetConfig['theme'];
 type IntegrationKey = keyof MusicWidgetConfig['integrations'];
@@ -91,13 +92,14 @@ export const MusicSettings: React.FC = () => {
         <label className="text-gray-200 block mb-2 font-medium">Тема</label>
         <select
           value={music.theme}
-          onChange={(e) => updateSettings('music', { theme: e.target.value as ThemeValue })}
+          onChange={(e) => updateSettings('music', { theme: e.target.value as keyof typeof THEME_PRESETS })}
           className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         >
-          <option value="dynamic">Динамическая (по обложке)</option>
-          <option value="dark">Тёмная</option>
-          <option value="light">Светлая</option>
-          <option value="transparent">Прозрачная</option>
+          {Object.values(THEME_PRESETS).map((preset: ThemePreset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -115,7 +117,7 @@ export const MusicSettings: React.FC = () => {
           className="w-full accent-purple-600"
         />
         <p className="text-xs text-gray-500 mt-1">
-          0% = полностью непрозрачный, 100% = прозрачный фон
+          0% - прозрачный, 100% - непрозрачный фон
         </p>
       </div>
 
@@ -126,8 +128,8 @@ export const MusicSettings: React.FC = () => {
         </label>
         <input
           type="range"
-          min="10"
-          max="24"
+          min="16"
+          max="36"
           value={music.fontSize}
           onChange={(e) => updateSettings('music', { fontSize: Number(e.target.value) })}
           className="w-full accent-purple-600"

@@ -16,7 +16,7 @@ const getBestFromSrcset = (srcset) => {
 
 const strategies = {
   yandex: {
-    id: "yandex",
+    id: "yandexMusic",
     match: (host) => host.includes("music.yandex."),
     parse: () => {
       const playerBar = document.querySelector('[class*="PlayerBar_root__"]');
@@ -43,12 +43,12 @@ const strategies = {
       cover = cover || null;
       const bg = getComputedStyle(playerBar).getPropertyValue("--player-average-color-background")?.trim() || null;
 
-      return {title, artist, cover, background_color: bg, platform: "yandex"};
+      return {title, artist, cover, background_color: bg, platform: "yandexMusic"};
     }
   },
 
   vk: {
-    id: "vk",
+    id: "vkMusic",
     match: (host) => host.includes('vk.com') || host.includes('vk.ru'),
     parse: () => {
       const bar = document.querySelector('[class*="vkitAudioPlayerPlaybackBody__root"]');
@@ -62,7 +62,7 @@ const strategies = {
       const artist = artistEl.lastChild?.textContent.trim() || artistEl.textContent.trim();
       const cover = coverImg ? coverImg.getAttribute('src') : null;
       let bg = null;
-      return { title, artist, cover, background_color: bg, platform: "vk" };
+      return { title, artist, cover, background_color: bg, platform: "vkMusic" };
     }
   }
 }
@@ -78,8 +78,6 @@ const findActiveStrategy = () => {
 
 const sendToBackground = (data) => {
   if(!data.title || !data.artist) return;
-
-  // || - на случай, если в названии трека или артиста используется дефис, чтобы не путать с разделителем между ними.
   const trackKey = `${data.artist.toLowerCase()} || ${data.title.toLowerCase()}`;
 
   if(trackKey === lastTrackKey) return;
@@ -87,10 +85,27 @@ const sendToBackground = (data) => {
   lastTrackKey = trackKey;
 
   console.log(`🎶 [${activeStrategy.id}] New Track:`, data.artist, "-", data.title);
-  chrome.runtime.sendMessage({ 
-    type: "TRACK_UPDATE", 
-    payload: data 
-  });
+  try{
+    chrome.runtime.sendMessage({ 
+      type: "TRACK_UPDATE", 
+      payload: data 
+    })
+  }catch(e){
+    if(e.message?.includes("Extension context invalidated")) {
+      console.warn("[Content] Extension context invalidated, stopping monitoring");
+      stopMonitoring();
+    } else {
+      console.error("[Content] sendMessage error:", e);
+    }
+  }
+}
+
+const stopMonitoring = () => {
+  if(pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+  activeStrategy = null;
 }
 
 const startMonitoring = () => {

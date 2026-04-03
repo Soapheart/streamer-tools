@@ -1,25 +1,36 @@
 import { ipcMain } from 'electron';
-import { StoragePort } from '../../core/ports/StoragePort';
-import { PartialSettings } from '../../shared/types';
+import { ElectronStoreAdapter } from '../../adapters/storage/ElectronStoreAdapter';
+import { MusicWidgetAdapter } from '../../adapters/widgets/MusicWidgetAdapter';
+import { AppSettings } from '../../shared/types';
 
-export function registerSettingsHandlers(storage: StoragePort) {
-  ipcMain.handle('settings:get', async () => {
-    console.log('📂 Loading settings');
-    return await storage.getSettings();
+export function registerSettingsHandlers(
+  storage: ElectronStoreAdapter,
+  musicAdapter?: MusicWidgetAdapter
+) {
+  ipcMain.handle('get-settings', () => {
+    return storage.getSettings();
   });
 
-  ipcMain.handle('settings:save', async (_event, settings: PartialSettings) => {
-    console.log('💾 Saving settings');
-    await storage.saveSettings(settings);
+  ipcMain.handle('settings:save', (_event, settings: Partial<AppSettings>) => {
+    try{
+      storage.saveSettings(settings);
+
+      if(musicAdapter && settings.music) {
+        musicAdapter.broadcastSettings(settings.music);
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      return { success: false, error };
+    }
   });
 
-  // Для push-уведомлений об изменениях (опционально)
   ipcMain.on('settings:subscribe', (event) => {
-    const unsubscribe = storage.subscribe((settings) => {
-      event.sender.send('settings:updated', settings);
+    const unsubscribe = storage.onDidChange((newSettings) => {
+      event.sender.send('settings:updated', newSettings);
     });
-    
-    // Cleanup при закрытии окна
-    event.sender.once('destroyed', unsubscribe);
+    event.sender.once('closed', () => {
+      unsubscribe();
+    });
   });
 }

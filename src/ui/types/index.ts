@@ -1,32 +1,19 @@
-export type WidgetCategory = 'music' | 'chat' | 'auction' | 'general' | 'about';
+import { AppSettings, PartialSettings } from "../../shared/types";
 
-export interface WidgetSettings {
-    music: {
-        enabled: boolean;
-        showCover: boolean;
-        showProgress?: boolean;
-        theme: 'dynamic' | 'light' | 'dark' | 'transparent';
-        fontSize: number;
-        position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-        integrations: {
-            yandexMusic: boolean;
-            vkMusic: boolean;
-        };
-    };
-    chat: {
-        enabled: boolean;
-    };
-    auction: {
-        enabled: boolean;
-    };
-}
+export type AppCategory = 'music' | 'chat' | 'auction' | 'general' | 'about';
+
 
 export interface DashboardState {
-    activeCategory: WidgetCategory;
-    settings: WidgetSettings;
-    setActiveCategory: (category: WidgetCategory) => void;
-    updateSettings: <K extends keyof WidgetSettings> (
+    activeCategory: AppCategory;
+    settings: AppSettings;
+    setActiveCategory: (category: AppCategory) => void;
+    updateSettings: <K extends keyof AppSettings> (
         category: K,
-        updates: Partial<WidgetSettings[K]>
+        updates: Partial<AppSettings[K]>
     ) => void;
+    loadSettings: (settings: AppSettings) => void;
+    // Внутренние методы для синхронизации с Electron Store
+    _saveToStorage: (settings: PartialSettings) => void;
+    _loadFromStorage: () => Promise<void>;
+    _subscribeToStorage: () => () => void; // Возвращает функцию отписки
 }

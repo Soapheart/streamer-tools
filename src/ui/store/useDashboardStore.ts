@@ -1,38 +1,10 @@
 import { create } from 'zustand';
 import { AppSettings, PartialSettings } from '../../shared/types';
+import { DEFAULT_SETTINGS } from '../../shared/constants';
+import { DashboardState } from '../types';
 
 // Дефолтные настройки
-const defaultSettings: AppSettings = {
-  music: {
-    enabled: true,
-    showCover: true,
-    showProgress: true,
-    theme: 'dynamic',
-    fontSize: 14,
-    bgTransparency: 100,
-    widgetHeight: 100,
-    widgetWidth: 300,
-    integrations: { yandexMusic: true, vkMusic: false },
-  },
-  chat: { enabled: true },
-  auction: { enabled: true }
-};
-
-// Состояние стора
-interface DashboardState {
-  activeCategory: 'general' | 'music' | 'chat' | 'auction' | 'about';
-  settings: AppSettings;
-  setActiveCategory: (category: 'general' | 'music' | 'chat' | 'auction' | 'about') => void;
-  updateSettings: <K extends keyof AppSettings>(
-    category: K, 
-    updates: Partial<AppSettings[K]>
-  ) => void;
-  loadSettings: (settings: AppSettings) => void;
-    // Внутренние методы для синхронизации с Electron Store
-    _saveToStorage: (settings: PartialSettings) => void;
-    _loadFromStorage: () => Promise<void>;
-    _subscribeToStorage: () => () => void; // Возвращает функцию отписки
-}
+const defaultSettings: AppSettings = DEFAULT_SETTINGS
 
 function debounce<T extends (...args: any[]) => void>(
   func: T, 

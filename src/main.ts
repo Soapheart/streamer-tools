@@ -76,17 +76,29 @@ function createWindow() {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(path.join(__dirname, `../renderer/$
+      {MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 }
 
 app.whenReady().then(() => {
   createWindow();
-  startWidgetServer();
 
   // Инициализация хранилища
   storage = new ElectronStoreAdapter();
-  registerSettingsHandlers(storage)
+
+  try{
+    const currentSettings = storage.getSettings();
+    if (currentSettings?.music) {
+      musicAdapter.initialize(currentSettings.music);
+    }
+  } catch (error) {
+    console.error('Failed to load settings on startup:', error);
+  }
+
+  registerSettingsHandlers(storage, musicAdapter);
+
+  startWidgetServer();
 
   // === Обработчик открытия внешних ссылок ===
   ipcMain.handle('open-external', async (_event, url: string) => {

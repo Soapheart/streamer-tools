@@ -1,4 +1,18 @@
-// src/shared/types.ts
+import { THEME_PRESETS } from "./themes";
+
+// === Типы для кнопок ===
+export type LinkAction = 'open' | 'copy';
+export interface ExternalLinkButtonProps {
+  url: string;
+  label: string;
+  icon?: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  action?: LinkAction;
+  onSuccess?: (action: LinkAction) => void; // <-- Добавлен аргумент
+  onError?: (error: Error, action: LinkAction) => void; // <-- Добавлен аргумент
+}
 
 // === Базовые настройки виджета (общие для всех) ===
 export interface BaseWidgetConfig {
@@ -6,18 +20,33 @@ export interface BaseWidgetConfig {
 }
 
 // === Настройки музыки ===
+// В будущем можно удалить fontSize и bgTransparency
 export interface MusicWidgetConfig extends BaseWidgetConfig {
   showCover: boolean;
-  showProgress: boolean;
-  theme: 'dynamic' | 'dark' | 'light' | 'transparent';
+  theme: keyof typeof THEME_PRESETS;
   bgTransparency: number;
+  colors: {
+    background?: string,
+    text?: string,
+    textSecondary?: string,
+    accent?: string,
+  },
+  fonts: {
+    size?: number,
+    family?: string,
+    weight?: string
+  },
+  effects: {
+    shadow: string,
+    borderRadius: string,
+  },
   fontSize: number;
   widgetHeight: number;
   widgetWidth: number;
   integrations: {
     yandexMusic: boolean;
     vkMusic: boolean;
-  };
+  },
 }
 
 export interface MusicTrack {
@@ -25,7 +54,7 @@ export interface MusicTrack {
     artist: string;
     cover?: string;
     background_color?: string;
-    platform?: "vk" | "yandex";
+    platform?: "vkMusic" | "yandexMusic";
 }
 
 // === Настройки чата ===

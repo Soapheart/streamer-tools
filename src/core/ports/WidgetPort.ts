@@ -1,4 +1,5 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { MusicTrack } from '../../shared/types';
+import { WebSocketServer } from 'ws';
 
 export interface WidgetAdapter {
   /** Уникальный путь для WebSocket (например, '/ws/music') */
@@ -9,4 +10,6 @@ export interface WidgetAdapter {
   
   /** Опционально: получить последнее состояние для нового клиента */
   getLastState?(): unknown | null;
+  
+  updateTrack?(track: MusicTrack): void;
 }

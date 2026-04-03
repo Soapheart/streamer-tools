@@ -1,22 +1,26 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { WidgetAdapter } from '../../core/ports/WidgetPort';
-import { MusicWidgetConfig, MusicTrack } from '../../shared/types'; // ✅ Относительный путь
-
+import { MusicTrack, MusicWidgetConfig } from '../../shared/types';
 
 export class MusicWidgetAdapter implements WidgetAdapter {
   path = '/ws/music';
+  
   private lastTrack: MusicTrack | null = null;
   private lastSettings: Partial<MusicWidgetConfig> | null = null;
   private wss: WebSocketServer | null = null;
 
+  // Возможно дублирование настроек в сторе
+  private activeIntegrations: MusicWidgetConfig['integrations'] = {
+    yandexMusic: true,
+    vkMusic: false,
+  };
+
   setup(wss: WebSocketServer) {
     this.wss = wss;
-    
+
     wss.on('connection', (ws: WebSocket, req) => {
-      // Гибкая проверка пути (поддерживаем /ws/music, /ws/music/, с параметрами)
-      const requestPath = req.url?.split('?')[0].replace(/\/$/, '');
-      const adapterPath = this.path.replace(/\/$/, '');
-      if (requestPath !== adapterPath) return;
+      // Проверяем путь подключения
+      if (req.url !== this.path && req.url !== undefined) return;
 
       console.log('🎵 Music widget connected');
 
@@ -24,29 +28,23 @@ export class MusicWidgetAdapter implements WidgetAdapter {
       if (this.lastTrack) {
         ws.send(JSON.stringify({ type: 'TRACK_UPDATE', payload: this.lastTrack }));
       }
-      if(this.lastSettings){
+      if (this.lastSettings) {
         ws.send(JSON.stringify({ type: 'SETTINGS_UPDATE', payload: this.lastSettings }));
       }
 
       ws.on('message', (message: Buffer) => {
         try {
           const data = JSON.parse(message.toString());
+          
+          // Обработка PING для keep-alive
+          if (data.type === 'PING') {
+            ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }));
+            return;
+          }
 
           // Обработка обновления трека от расширения
           if (data.type === 'TRACK_UPDATE' && data.payload) {
-            this.lastTrack = data.payload as MusicTrack;
-            console.log('🎵 Track updated:', this.lastTrack.title);
-            
-            // Рассылаем всем подключённым виджетам (в "плоском" формате)
-            wss.clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN && client !== ws) {
-                try {
-                  client.send(JSON.stringify({ type: 'TRACK_UPDATE', payload: this.lastTrack }));
-                } catch (err) {
-                  console.error('❌ Failed to send to client:', err);
-                }
-              }
-            });
+            this.handleIncomingTrack(data.payload as MusicTrack);
           }
         } catch (e) {
           console.error('❌ Invalid music message:', e);
@@ -63,56 +61,87 @@ export class MusicWidgetAdapter implements WidgetAdapter {
     });
   }
 
+  initialize(settings: MusicWidgetConfig){
+    console.log('Initializing MusicWidgetAdapter with store settings');
+    if(settings.integrations) {
+      this.activeIntegrations = {
+        ...this.activeIntegrations,
+        ...settings.integrations
+      };
+    }
+    this.lastSettings = settings;
+  }
+
   private handleIncomingTrack(track: MusicTrack) {
     const platform = track.platform;
-    if(!platform) {
-      console.warn('⚠️ Received track without platform info:', track);
+    console.log(`Received track from platform: ${platform}`);
+    let integrationKey: keyof MusicWidgetConfig['integrations'] | null = null;
+    if (!platform) {
+      console.warn('⚠️ Track without platform, passing through...');
       this.broadcastTrack(track);
       return;
     }
-    let IntegrationKey: keyof IntegrationState | null = null;
+    switch (platform) {
+      case 'yandexMusic':
+        integrationKey = 'yandexMusic';
+        break;
+      case 'vkMusic':
+        integrationKey = 'vkMusic';
+        break;
+      default:
+        console.warn(`⚠️ Received track with unknown platform "${platform}". Passing through...`, track);
+        this.broadcastTrack(track);
+        return;
+    }
+
+    if (!this.activeIntegrations[integrationKey]) {
+      console.log(`🚫 Ignoring track from ${platform} (integration disabled)`);
+      return; 
+    }
+
+    this.broadcastTrack(track);
   }
 
-  // ✅ Метод рассылки настроек
-  broadcastSettings(settings: Partial<MusicWidgetConfig>) {
-    if (!this.wss) {
-      console.warn('❌ WebSocket server not initialized yet');
-      return;
-    }
-
-    this.lastSettings = { ...this.lastSettings, ...settings };
-
-    const payload: Partial<MusicWidgetConfig> = {};
-    // Прозрачность: конвертируем 0-100 → 0-1 для CSS
-    if (settings.bgTransparency !== undefined) {
-      payload.bgTransparency = settings.bgTransparency;
-    }
-    
-    if (settings.theme) {
-      payload.theme = settings.theme;
-    }
-    
-    if (settings.fontSize) {
-      payload.fontSize = settings.fontSize;
-    }
-    
-    // ✅ Проверка на undefined, чтобы false тоже передавался
-    if (settings.showCover !== undefined) {
-      payload.showCover = settings.showCover;
-    }
-
-    console.log('🎨 Broadcasting settings:', payload);
-  
-    this.wss.clients.forEach((client, index) => {
-      console.log(`📡 Client ${index}: readyState=${client.readyState}`);
+  private broadcastTrack(track: MusicTrack) {
+    this.lastTrack = track;
+    const message = JSON.stringify({ type: 'TRACK_UPDATE', payload: track });
+    // console.log('Broadcasting track to clients:', message);
+    this.wss?.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         try {
-          client.send(JSON.stringify({
-            type: 'SETTINGS_UPDATE',
-            payload
-          }));
-        } catch (e) {
-          console.error('❌ Failed to send settings:', e);
+          console.log('🎵 Sending track to client:', track.title);
+          client.send(message);
+        } catch (err) {
+          console.error('❌ Failed to broadcast track to client:', err);
+        }
+      }
+    });
+  }
+
+  public broadcastSettings(settings: Partial<MusicWidgetConfig>) {
+    if (settings.integrations) {
+      this.activeIntegrations = {
+        ...this.activeIntegrations,
+        ...settings.integrations
+      };
+    }
+    this.lastSettings = { ...this.lastSettings, ...settings };
+
+
+    const payload = {} as Partial<MusicWidgetConfig>;
+    if(settings.theme != undefined) payload.theme = settings.theme;
+    if(settings.bgTransparency != undefined) payload.bgTransparency = settings.bgTransparency / 100;
+    if(settings.fontSize != undefined) payload.fontSize = settings.fontSize;
+    if(settings.showCover != undefined) payload.showCover = settings.showCover;
+    
+    const message = JSON.stringify({ type: 'SETTINGS_UPDATE', payload: payload });
+
+    this.wss?.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(message);
+        } catch (err) {
+          console.error('❌ Failed to broadcast settings to client:', err);
         }
       }
     });

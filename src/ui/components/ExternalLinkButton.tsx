@@ -1,18 +1,6 @@
 import React from 'react';
+import { ExternalLinkButtonProps } from '../../shared/types';
 
-export type LinkAction = 'open' | 'copy';
-
-export interface ExternalLinkButtonProps {
-  url: string;
-  label: string;
-  icon?: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  action?: LinkAction;
-  onSuccess?: (action: LinkAction) => void; // <-- Добавлен аргумент
-  onError?: (error: Error, action: LinkAction) => void; // <-- Добавлен аргумент
-}
 
 export const ExternalLinkButton: React.FC<ExternalLinkButtonProps> = ({
   url,
