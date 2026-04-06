@@ -55,16 +55,16 @@ function handleMessage(data) {
     }
 
     const fullText = `${track.artist} — ${track.title}`;
-    if (fullText === lastText) return; // не обновляем если та же песня
+    if (fullText === lastText && track.background_color === widgetEl.style.getPropertyValue("--widget-bg-color")) return; // не обновляем если та же песня и тот же цвет фона
     lastText = fullText;
 
-    console.log("Track received in widget:", track.title, track.artist);
+    // console.log("Track received in widget:", track.title, track.artist);
 
     updateCover(track.cover);
 
     if(track.background_color) {
-      const currentTransparency = widgetEl.style.getPropertyValue("--widget-bg-color").trim();
-      updateBackground(track.background_color, getAlpha(currentTransparency));
+      console.log("Updating widget background color to:", track.background_color);
+      widgetEl.style.setProperty("--widget-bg-color", track.background_color);
     }
 
     updateText(track.artist, track.title);
@@ -87,9 +87,6 @@ function applySettings(settings) {
   if(settings.showCover !== undefined) {
     document.getElementById("cover").classList.toggle("hidden", !settings.showCover);
   }
-  if(settings.bgTransparency !== undefined) {
-    updateBackground(null, settings.bgTransparency);
-  }
 }
 
 function updateCover(coverUrl) {
@@ -102,55 +99,7 @@ function updateCover(coverUrl) {
     coverEl.src = "./empty-album-art.svg";
   }
 }
-// Получаем альфу
-function getAlpha(color) {
-  const match = color.match(/rgba?\(([^)]+)\)|hsla?\(([^)]+)\)/);
-  if (!match) return null;
-  const values = (match[1] || match[2]).split(',').map(v => v.trim());
-  return values.length === 4 ? parseFloat(values[3]) : 1;
-}
 
-function updateBackground(color, transparency) {
-  console.log("Updating background in widget:", { color, transparency });
-  if (!widgetEl) return;
-  if (color === null && transparency !== undefined) {
-    const currentColor = widgetEl.style.getPropertyValue("--widget-bg-color").trim();
-    console.log("transparency", transparency);
-    const alpha = transparency;
-    console.log("Current bg color:", currentColor, "New alpha:", alpha);
-    if(currentColor){
-      if (currentColor.startsWith("hsla")){
-        console.log("Current color is already HSLA, updating alpha...");
-        const newColor = currentColor.replace(/[\d.]+\)$/, `${alpha})`);
-        console.log("Updating HSL color to:", newColor);
-        widgetEl.style.setProperty("--widget-bg-color", newColor);
-      } else if (currentColor.startsWith("rgba")){
-        console.log("Current color is already RGBA, updating alpha...");
-        const newColor = currentColor.replace(/[\d.]+\)$/, `${alpha})`);
-        widgetEl.style.setProperty("--widget-bg-color", newColor);
-      }
-    }
-    return;
-  }
-  if(!color) return;
-
-  const alpha = transparency !== undefined ? transparency : 1;
-
-  if (color.includes("hsl")) {
-    const hsl = color.match(/hsl\(.+\)/)?.[0];
-    if (hsl) {
-      const hsla = `hsla(${hsl.slice(4, -1)}, ${alpha})`;
-      widgetEl.style.setProperty("--widget-bg-color", hsla);
-    }
-  } else {
-    // Парсим hex (#RRGGBB) в rgba
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-    const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    widgetEl.style.setProperty("--widget-bg-color", rgba);
-  }
-}
 
 function updateText(artist, title) {
   const titleEl = document.querySelector(".title");
@@ -162,7 +111,7 @@ function updateText(artist, title) {
 function sendPing() {
   if (ws.readyState === WebSocket.OPEN) {
     // console.log("Sending PING to music WS");
-    ws.send(JSON.stringify({ type: "PING" }));
+    ws.send(JSON.stringify({ type: "PING", payload: "Ping from OBS Widget" }));
   }
 }
 

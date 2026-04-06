@@ -1,5 +1,13 @@
 import { THEME_PRESETS } from "./themes";
 
+// === Типы сообщений для WebSocket ===
+export enum WSMessageType {
+  TRACK_UPDATE = 'TRACK_UPDATE',
+  SETTINGS_UPDATE = 'SETTINGS_UPDATE',
+  PING = 'PING',
+  PONG = 'PONG'
+}
+
 // === Типы для кнопок ===
 export type LinkAction = 'open' | 'copy';
 export interface ExternalLinkButtonProps {
@@ -26,7 +34,7 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
   theme: keyof typeof THEME_PRESETS;
   bgTransparency: number;
   colors: {
-    background?: string,
+    background: string,
     text?: string,
     textSecondary?: string,
     accent?: string,

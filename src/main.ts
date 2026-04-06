@@ -9,10 +9,10 @@ import { registerSettingsHandlers } from './transports/ipc/settings';
 import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
 import { WidgetAdapter } from './core/ports/WidgetPort';
 import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
-import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
+// import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
 import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { WebSocketServer } from 'ws';
-
+import { WSGateway } from './core/wsGateway';
 
 let storage: ElectronStoreAdapter;
 
@@ -20,8 +20,8 @@ let storage: ElectronStoreAdapter;
 const musicAdapter = new MusicWidgetAdapter();
 const widgetAdapters: WidgetAdapter[] = [
   musicAdapter,
-  new ChatWidgetAdapter(),
-  new AuctionWidgetAdapter(),
+  // new ChatWidgetAdapter(),
+  // new AuctionWidgetAdapter(),
 ];
 
 
@@ -42,12 +42,15 @@ function startWidgetServer() {
 
   const server = http.createServer(widgetApp);
   const wss = new WebSocketServer({ server });
-
+  const wsGateway = new WSGateway(wss);
 
   widgetAdapters.forEach(adapter => {
     console.log(`🔌 Setting up widget adapter: ${adapter.path}`);
-    adapter.setup(wss);
+    wsGateway.register(adapter);
   });
+
+  wsGateway.start();
+
 
   const PORT = 3000;
   server.listen(PORT, '127.0.0.1', () => {
@@ -90,7 +93,7 @@ app.whenReady().then(() => {
   try{
     const currentSettings = storage.getSettings();
     if (currentSettings?.music) {
-      musicAdapter.initialize(currentSettings.music);
+      // musicAdapter.initialize(currentSettings.music);
     }
   } catch (error) {
     console.error('Failed to load settings on startup:', error);
@@ -118,7 +121,7 @@ app.whenReady().then(() => {
 ipcMain.on('widget:settings:update', (_event, {widget, settings}) => {
   console.log('Received widget settings update:', { widget, settings });
   if( widget === 'music'){
-    musicAdapter.broadcastSettings(settings);
+    // musicAdapter.broadcastSettings(settings);
   }
 })
 

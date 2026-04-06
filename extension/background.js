@@ -34,37 +34,76 @@
 //   lastTrack = msg.payload;
 //   sendTrack(lastTrack);
 // });
-let ws = null;
-let lastTrack = null;
 
-function connectWS() {
-  ws = new WebSocket("ws://127.0.0.1:3000/ws/music");
 
-  ws.onopen = () => {
-    console.log("[BG] WS connected");
-    if (lastTrack) ws.send(JSON.stringify(lastTrack));
-  };
 
-  ws.onclose = () => {
-    console.log("[BG] WS closed, retry...");
-    setTimeout(connectWS, 2000);
-  };
+// let ws = null;
+// let lastTrack = null;
 
-  ws.onerror = () => ws.close();
+// function connectWS() {
+//   ws = new WebSocket("ws://127.0.0.1:3000/ws/music");
+
+//   ws.onopen = () => {
+//     console.log("[BG] WS connected");
+//     if (lastTrack) ws.send(JSON.stringify(lastTrack));
+//   };
+
+//   ws.onclose = () => {
+//     console.log("[BG] WS closed, retry...");
+//     setTimeout(connectWS, 2000);
+//   };
+
+//   ws.onerror = () => ws.close();
+// }
+
+// connectWS();
+
+// // background.js
+// chrome.runtime.onMessage.addListener(msg => {
+//   if (msg.type !== "TRACK_UPDATE") return;
+//   lastTrack = msg.payload;
+
+//   if (ws?.readyState === WebSocket.OPEN) {
+//     ws.send(JSON.stringify({ 
+//       type: "TRACK_UPDATE", 
+//       payload: lastTrack 
+//     }));
+//     console.log("[BG → WS]", lastTrack.title);
+//   }
+// });
+
+
+let creating;
+
+// гарантируем, что offscreen существует
+async function ensureOffscreen() {
+  if (creating) return creating;
+
+  creating = chrome.offscreen.hasDocument().then(async exists => {
+    if (exists) return;
+
+    await chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: ['BLOBS'], // можно и другие, но этого хватает
+      justification: 'Keep WebSocket alive'
+    });
+  });
+
+  await creating;
+  creating = null;
 }
 
-connectWS();
+// при старте
+ensureOffscreen();
 
-// background.js
-chrome.runtime.onMessage.addListener(msg => {
+// проксируем сообщения в offscreen
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type !== "TRACK_UPDATE") return;
-  lastTrack = msg.payload;
 
-  if (ws?.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ 
-      type: "TRACK_UPDATE", 
-      payload: lastTrack 
-    }));
-    console.log("[BG → WS]", lastTrack.title);
-  }
+  ensureOffscreen().then(() => {
+    chrome.runtime.sendMessage({
+      target: "offscreen",
+      ...msg
+    });
+  });
 });
