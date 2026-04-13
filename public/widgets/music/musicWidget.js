@@ -68,6 +68,8 @@ function handleMessage(data) {
     }
 
     updateText(track.artist, track.title);
+
+    console.log(track.playState);
   }
 }
 

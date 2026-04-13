@@ -2,13 +2,19 @@ import { ipcMain } from 'electron';
 import { ElectronStoreAdapter } from '../../adapters/storage/ElectronStoreAdapter';
 import { MusicWidgetAdapter } from '../../adapters/widgets/MusicWidgetAdapter';
 import { AppSettings } from '../../shared/types';
+import { ca } from 'zod/locales';
 
 export function registerSettingsHandlers(
   storage: ElectronStoreAdapter,
   musicAdapter?: MusicWidgetAdapter
 ) {
   ipcMain.handle('get-settings', () => {
-    return storage.getSettings();
+    try{
+      return storage.getSettings();
+    }catch (error) {
+      console.error('Failed to get settings:', error);
+      return null;
+    }
   });
 
   ipcMain.handle('settings:save', (_event, settings: Partial<AppSettings>) => {

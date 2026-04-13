@@ -13,6 +13,7 @@ import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
 import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { WebSocketServer } from 'ws';
 import { WSGateway } from './core/wsGateway';
+import { fileURLToPath } from 'url';
 
 let storage: ElectronStoreAdapter;
 
@@ -24,6 +25,9 @@ const widgetAdapters: WidgetAdapter[] = [
   // new AuctionWidgetAdapter(),
 ];
 
+// === Конфигурация для загрузки UI ===
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Инициализация Express сервера для виджетов OBS
 function startWidgetServer() {
@@ -85,7 +89,6 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  createWindow();
 
   // Инициализация хранилища
   storage = new ElectronStoreAdapter();
@@ -93,13 +96,15 @@ app.whenReady().then(() => {
   try{
     const currentSettings = storage.getSettings();
     if (currentSettings?.music) {
-      // musicAdapter.initialize(currentSettings.music);
+      // console.log('Initializing settings')
+      musicAdapter.initialize(currentSettings.music);
     }
   } catch (error) {
     console.error('Failed to load settings on startup:', error);
   }
 
   registerSettingsHandlers(storage, musicAdapter);
+  createWindow();
 
   startWidgetServer();
 
@@ -124,7 +129,6 @@ ipcMain.on('widget:settings:update', (_event, {widget, settings}) => {
     // musicAdapter.broadcastSettings(settings);
   }
 })
-
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -64,6 +64,17 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   // Публичные методы (вызываются извне, например через IPC)
   // ─────────────────────────────────────────────────────────
 
+
+  public initialize(settings: MusicWidgetConfig): void {
+    console.log('🎵 Initializing MusicWidgetAdapter');
+    this.lastSettings = settings;
+    // Инициализирует последние настройки и активные интеграции при загрузке приложения
+    console.log('Current integration settings:', this.lastSettings);
+    if (settings.integrations) {
+      this.activeIntegrations = { ...this.activeIntegrations, ...settings.integrations };
+    }
+  }
+
   /**
    * Обновление настроек из Electron UI (через ipcMain)
    */
@@ -75,7 +86,7 @@ export class MusicWidgetAdapter implements WidgetAdapter {
         ...settings.integrations
       };
     }
-    
+
     // Кэшируем настройки для новых клиентов
     this.lastSettings = { ...this.lastSettings, ...settings };
 

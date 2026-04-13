@@ -38,23 +38,24 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
     text?: string,
     textSecondary?: string,
     accent?: string,
-  },
+  };
   fonts: {
     size?: number,
     family?: string,
     weight?: string
-  },
+  };
   effects: {
     shadow: string,
-    borderRadius: string,
-  },
+    borderRadius: number,
+  };
   fontSize: number;
   widgetHeight: number;
   widgetWidth: number;
   integrations: {
     yandexMusic: boolean;
     vkMusic: boolean;
-  },
+  };
+  playState?: "playing" | "paused";
 }
 
 export interface MusicTrack {
@@ -81,6 +82,10 @@ export interface AppSettings {
   music: MusicWidgetConfig;
   chat: ChatWidgetConfig;
   auction: AuctionWidgetConfig;
+}
+
+export type StoreSchema = {
+  settings: AppSettings;
 }
 
 // === Для частичных обновлений (удобно для форм) ===

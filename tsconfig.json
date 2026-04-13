@@ -1,23 +1,21 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "noImplicitAny": true,
+    "strict": true,
     "sourceMap": true,
     "baseUrl": ".",
     "outDir": "dist",
-    "moduleResolution": "node",
     "resolveJsonModule": true,
-
     "jsx": "react-jsx",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "isolatedModules": true,
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "src/ui/types/electron.d.ts"
-, "public/widgets/music/widget.js"  ],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "src/ui/types/electron.d.ts"],
+  "exclude": ["node_modules", "dist", "public/widgets/"]
 }

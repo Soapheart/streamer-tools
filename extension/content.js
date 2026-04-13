@@ -18,19 +18,30 @@ const strategies = {
   yandex: {
     id: "yandexMusic",
     match: (host) => host.includes("music.yandex."),
+    selectors:{
+        playerBar: '[class*="PlayerBar_root__"]',
+        title: '[class*="Meta_title__"]',
+        artist: '[class*="Meta_artistCaption__"]',
+        coverDesktop: '[class*="PlayerBarDesktopWithBackgroundProgressBar_cover__"]',
+        coverMobile: '[class*="PlayerBarMobile_cover__"]',
+        bgVar: "--player-average-color-background",
+        playStateDesktop: '[class*="BaseSonataControlsDesktop_sonataButton__"]',
+        playStateMobile: '[class*="SonataControls_root__"]'
+    },
     parse: () => {
-      const playerBar = document.querySelector('[class*="PlayerBar_root__"]');
+      const playerBar = document.querySelector(strategies.yandex.selectors.playerBar);
       if (!playerBar) return null;
-      const titleEl = playerBar.querySelector('[class*="Meta_title__"]');
-      const artistEls = playerBar.querySelectorAll('[class*="Meta_artistCaption__"]');
+
+      const titleEl = playerBar.querySelector(strategies.yandex.selectors.title);
+      const artistEls = playerBar.querySelectorAll(strategies.yandex.selectors.artist);
       if(!titleEl || artistEls.length === 0) return null;
 
       const title = titleEl.textContent.trim();
       const artist = Array.from(artistEls).map(artist => artist.textContent.trim()).join(', ');
 
       let cover = null;
-      const coverEl = playerBar.querySelector('[class*="PlayerBarDesktopWithBackgroundProgressBar_cover__"]') ||
-        playerBar.querySelector('[class*="PlayerBarMobile_cover__"]');
+      const coverEl = playerBar.querySelector(strategies.yandex.selectors.coverDesktop) ||
+        playerBar.querySelector(strategies.yandex.selectors.coverMobile);
       if(coverEl){
         const srcset = coverEl.getAttribute("srcset")
         if(srcset){
@@ -41,9 +52,16 @@ const strategies = {
         }
       }
       cover = cover || null;
-      const bg = getComputedStyle(playerBar).getPropertyValue("--player-average-color-background")?.trim() || null;
+      const bg = getComputedStyle(playerBar).getPropertyValue(strategies.yandex.selectors.bgVar)?.trim() || null;
 
-      return {title, artist, cover, background_color: bg, platform: "yandexMusic"};
+      const playEl = playerBar.querySelectorAll(strategies.yandex.selectors.playStateDesktop)[2] ?? playerBar.querySelector(strategies.yandex.selectors.playStateMobile);
+      let playState = "paused";
+      if(playEl){
+        const isPlaying = playEl.getAttribute("aria-label")?.toLowerCase().includes("playback");
+        playState = isPlaying ? "paused" : "playing";
+      }
+
+      return {title, artist, cover, background_color: bg, platform: "yandexMusic", playState};
     }
   },
 
@@ -51,11 +69,11 @@ const strategies = {
     id: "vkMusic",
     match: (host) => host.includes('vk.com') || host.includes('vk.ru'),
     parse: () => {
-      const bar = document.querySelector('[class*="vkitAudioPlayerPlaybackBody__root"]');
+      const bar = document.querySelector('[class^="vkitAudioPlayerPlaybackBody__root"]');
       if (!bar) return null;
-      const coverImg = bar.querySelector('[class*="vkuiImageBase__img"]');
-      const titleEl = bar.querySelector('[class*="vkitAudioPlayerAudioInfo__title"]');
-      const artistEl = bar.querySelector('[class*="vkitAudioPlayerAudioInfo__extra"]');
+      const coverImg = bar.querySelector('[class^="vkuiImageBase__img"]');
+      const titleEl = bar.querySelector('[class^="vkitAudioPlayerAudioInfo__title"]');
+      const artistEl = bar.querySelector('[class^="vkitAudioPlayerAudioInfo__extra"]');
       if (!titleEl || !artistEl) return null;
 
       const title = titleEl.lastChild?.textContent.trim() || titleEl.textContent.trim();
@@ -85,6 +103,7 @@ const sendToBackground = (data) => {
   lastTrackKey = trackKey;
 
   console.log(`🎶 [${activeStrategy.id}] New Track:`, data.artist, "-", data.title);
+  console.log(`Play State:`, data.playState);
   try{
     chrome.runtime.sendMessage({ 
       type: "TRACK_UPDATE", 
