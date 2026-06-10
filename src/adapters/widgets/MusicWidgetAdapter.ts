@@ -1,7 +1,8 @@
 // adapters/widgets/MusicWidgetAdapter.ts
 import { WebSocket } from 'ws';
 import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
-import { MusicTrack, MusicWidgetConfig, WSMessageType } from '../../shared/types';
+import { MusicCaptureMethod, MusicTrack, MusicWidgetConfig, WSMessageType } from '../../shared/types';
+import { trace } from 'node:console';
 
 export class MusicWidgetAdapter implements WidgetAdapter {
   readonly path = '/ws/music';
@@ -15,6 +16,12 @@ export class MusicWidgetAdapter implements WidgetAdapter {
     yandexMusic: true,
     vkMusic: false,
   };
+
+
+  private captureMethod: MusicCaptureMethod = 'auto';
+  private allowVideoContent = false;
+  private extensionConnected = false;
+  private extensionLastSeen = 0;
 
   // ─────────────────────────────────────────────────────────
   // Хуки жизненного цикла (вызываются WSGateway)
@@ -51,7 +58,14 @@ export class MusicWidgetAdapter implements WidgetAdapter {
 
     // 🎵 Обработка обновления трека от Chrome-расширения
     if (data.type === WSMessageType.TRACK_UPDATE && data.payload) {
-      this.handleIncomingTrack(data.payload as MusicTrack);
+      const track = data.payload as MusicTrack;
+
+      if(track.source === 'extension'){
+        this.extensionConnected = true;
+        this.extensionLastSeen = Date.now();
+      }
+
+      this.handleIncomingTrack(track);
     }
   }
 
@@ -73,6 +87,14 @@ export class MusicWidgetAdapter implements WidgetAdapter {
     if (settings.integrations) {
       this.activeIntegrations = { ...this.activeIntegrations, ...settings.integrations };
     }
+    if(settings.captureMethod){
+      this.captureMethod = settings.captureMethod;
+      console.log(`Initial capture method: ${this.captureMethod}`);
+    }
+    if(settings.allowVideoContent !== undefined){
+      this.allowVideoContent = settings.allowVideoContent;
+      console.log(`Initial allow video content: ${this.allowVideoContent}`);
+    }
   }
 
   /**
@@ -85,6 +107,15 @@ export class MusicWidgetAdapter implements WidgetAdapter {
         ...this.activeIntegrations,
         ...settings.integrations
       };
+    }
+
+    if(settings.captureMethod !== undefined){
+      this.captureMethod = settings.captureMethod;
+      console.log(`🔄 Capture method changed to: ${this.captureMethod}`);
+    }
+    if(settings.allowVideoContent !== undefined){
+      this.allowVideoContent = settings.allowVideoContent;
+      console.log(`🎬 Allow video content: ${this.allowVideoContent}`);
     }
 
     // Кэшируем настройки для новых клиентов
@@ -115,43 +146,94 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   // ─────────────────────────────────────────────────────────
 
   private handleIncomingTrack(track: MusicTrack): void {
+    const source = track.source;
     const platform = track.platform;
-    
-    // Если платформа не указана — пропускаем трек (fallback)
-    if (!platform) {
-      console.warn('⚠️ Track without platform, passing through...');
-      this.broadcastTrack(track);
+    const contentType = track.contentType || 'music';
+
+    console.log('🔍 Incoming track details:', {
+      source: track.source,
+      platform: track.platform,
+      contentType: track.contentType,
+      title: track.title,
+      artist: track.artist,
+      captureMethod: this.captureMethod,
+      allowVideoContent: this.allowVideoContent
+    });
+
+    if (!this.isSourceAllowed(source)) {
+      console.log(`🚫 Source "${source}" blocked by captureMethod "${this.captureMethod}"`);
       return;
     }
 
-    // Маппинг платформы на ключ интеграции
-    let integrationKey: keyof MusicWidgetConfig['integrations'] | null = null;
-    switch (platform) {
-      case 'yandexMusic':
-        integrationKey = 'yandexMusic';
-        break;
-      case 'vkMusic':
-        integrationKey = 'vkMusic';
-        break;
-      default:
-        console.warn(`⚠️ Unknown platform "${platform}", passing through...`);
+
+    if(source === 'extension'){
+    // Если платформа не указана — пропускаем трек (fallback)
+      if (!platform) {
+        console.warn('⚠️ Track without platform, passing through...');
         this.broadcastTrack(track);
         return;
+      }
+
+      // Маппинг платформы на ключ интеграции
+      let integrationKey: keyof MusicWidgetConfig['integrations'] | null = null;
+      switch (platform) {
+        case 'yandexMusic':
+          integrationKey = 'yandexMusic';
+          break;
+        case 'vkMusic':
+          integrationKey = 'vkMusic';
+          break;
+        default:
+          console.warn(`⚠️ Unknown platform "${platform}", passing through...`);
+          this.broadcastTrack(track);
+          return;
+      }
+
+      // Фильтрация по настройкам интеграций
+      if (!this.activeIntegrations[integrationKey]) {
+        console.log(`🚫 Ignoring track from ${platform} (integration disabled)`);
+        return;
+      }
     }
 
-    // Фильтрация по настройкам интеграций
-    if (!this.activeIntegrations[integrationKey]) {
-      console.log(`🚫 Ignoring track from ${platform} (integration disabled)`);
-      return;
+    if(source === 'winrt' || source === 'mpris'){
+      if(contentType === 'video' && !this.allowVideoContent){
+          console.log(`🚫 Blocked video content: ${track.artist} - ${track.title}`);
+        return;
+      }
     }
 
+  console.log(`✅ Allowing track from ${source}: ${track.artist} - ${track.title}`);
     this.broadcastTrack(track);
   }
+
+  private isSourceAllowed(source: string): boolean {
+    switch(this.captureMethod){
+      case 'auto':
+        return true;
+      case 'extension':
+        return source === 'extension';
+      case 'winrt':
+        return source === this.captureMethod;
+      case 'mpris':
+        return source === this.captureMethod;
+      default:
+        return true;
+    }
+  }
+
+  public getExtensionStatus(): {connected: boolean, lastSeen: number}{
+    const isAlive = this.extensionConnected && (Date.now() - this.extensionLastSeen < 10000);
+    return {
+      connected: isAlive,
+      lastSeen: this.extensionLastSeen
+    }
+  }
+
 
   private broadcastTrack(track: MusicTrack): void {
     this.lastTrack = track;
     
-
     const payload = { ...track };
 
     // Applying transparency

@@ -57,7 +57,7 @@ const strategies = {
       const playEl = playerBar.querySelectorAll(strategies.yandex.selectors.playStateDesktop)[2] ?? playerBar.querySelector(strategies.yandex.selectors.playStateMobile);
       let playState = "paused";
       if(playEl){
-        const isPlaying = playEl.getAttribute("aria-label")?.toLowerCase().includes("playback");
+        const isPlaying = playEl.getAttribute("aria-label")?.toLowerCase().includes("pause");
         playState = isPlaying ? "paused" : "playing";
       }
 
@@ -107,7 +107,7 @@ const sendToBackground = (data) => {
   try{
     chrome.runtime.sendMessage({ 
       type: "TRACK_UPDATE", 
-      payload: data 
+      payload: {...data, source: 'extension'}
     })
   }catch(e){
     if(e.message?.includes("Extension context invalidated")) {

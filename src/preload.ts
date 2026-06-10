@@ -7,6 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // === Открытие внешних ссылок ===
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
+
+  // === Получение информации о системе и поддерживаемых методах захвата музыки ===
+  getSystemInfo: ()=> ipcRenderer.invoke('get-system-info'),
+  getExtensionStatus: ()=> ipcRenderer.invoke('get-extension-status'),
+
   // === Настройки (сохранение/загрузка) ===
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
@@ -14,7 +19,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     subscribe: (callback: (settings: unknown) => void) => {
       const listener = (_event: unknown, settings: unknown) => callback(settings);
       ipcRenderer.on('settings:updated', listener);
-      ipcRenderer.send('settings:subscribe');
       return () => ipcRenderer.removeListener('settings:updated', listener);
     },
   },

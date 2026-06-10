@@ -8,6 +8,9 @@ export enum WSMessageType {
   PONG = 'PONG'
 }
 
+// === Через какой метод захватывать музыку ===
+export type MusicCaptureMethod = 'auto' | 'extension' | 'winrt' | 'mpris';
+
 // === Типы для кнопок ===
 export type LinkAction = 'open' | 'copy';
 export interface ExternalLinkButtonProps {
@@ -56,6 +59,8 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
     vkMusic: boolean;
   };
   playState?: "playing" | "paused";
+  captureMethod: MusicCaptureMethod;
+  allowVideoContent: boolean;
 }
 
 export interface MusicTrack {
@@ -63,7 +68,9 @@ export interface MusicTrack {
     artist: string;
     cover?: string;
     background_color?: string;
-    platform?: "vkMusic" | "yandexMusic";
+    source: 'extension' | 'winrt' | 'mpris'
+    platform?: 'vkMusic' | 'yandexMusic' | 'spotify' | 'yandex-desktop' | 'browser' | 'unknown';
+    contentType?: 'music' | 'video' | 'unknown';
 }
 
 // === Настройки чата ===

@@ -1,16 +1,54 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { ExternalLinkButton } from '../ExternalLinkButton';
-import { MusicWidgetConfig } from '../../../shared/types';
+import { MusicWidgetConfig, MusicCaptureMethod } from '../../../shared/types';
 import { WIDGET_URLS } from '../../../shared/widgetUrls';
 import { THEME_PRESETS, ThemePreset } from '../../../shared/themes';
 
 type ThemeValue = MusicWidgetConfig['theme'];
 type IntegrationKey = keyof MusicWidgetConfig['integrations'];
 
+interface SystemInfo {
+  platform: string;
+  supportedMethods: string[];
+}
+
+interface ExtensionStatus {
+  connected: boolean;
+  lastSeen: number;
+}
+
+
 export const MusicSettings: React.FC = () => {
   const { settings, updateSettings } = useDashboardStore();
   const music = settings.music;
+
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
+  const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus>({
+    connected: false, 
+    lastSeen: 0
+  });
+
+  useEffect(() => {
+    // Получаем информацию о системе при загрузке компонента
+    if(window.electronAPI?.getSystemInfo){
+      window.electronAPI.getSystemInfo().then(setSystemInfo)
+    }
+  }, []);
+
+  //проверка статуса расширения
+  useEffect(() => {
+    const checkExtensionStatus = async () => {
+      if(window.electronAPI?.getExtensionStatus){
+        const status = await window.electronAPI.getExtensionStatus();
+        setExtensionStatus(status);
+      }
+    }
+    
+  checkExtensionStatus();
+    const interval = setInterval(checkExtensionStatus, 3000); // Проверять каждые 3 секунды
+  }, []);
+
 
   const handleIntegrationChange = (selected: IntegrationKey) => {
     updateSettings('music', {
@@ -20,6 +58,14 @@ export const MusicSettings: React.FC = () => {
       }
     });
   };
+
+  const handleCaptureMethodChange = (method: MusicCaptureMethod) => {
+    updateSettings('music', { captureMethod: method });
+  }
+
+  const showExtensionSettings = music.captureMethod === 'extension' || music.captureMethod === 'auto';
+  const showSystemSettings = music.captureMethod === 'winrt' || music.captureMethod === 'mpris' || music.captureMethod === 'auto';
+
 
   return (
     <div className="space-y-6">
@@ -46,32 +92,95 @@ export const MusicSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Выбор интеграции */}
-      <div className="flex flex-col items-start justify-start mt-4 space-y-2">
-        <label className="text-gray-200 font-medium">Источники музыки</label>
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="musicIntegration"
-              checked={music.integrations.yandexMusic}
-              onChange={() => handleIntegrationChange('yandexMusic')}
-              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-            />
-            <span>Yandex Music</span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="musicIntegration"
-              checked={music.integrations.vkMusic}
-              onChange={() => handleIntegrationChange('vkMusic')}
-              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-            />
-            <span>VK Music</span>
-          </label>
-        </div>
+
+      {/* Выбор метода захвата */}
+      <div>
+        <label className="text-gray-200 block mb-2 font-medium">Источник данных</label>
+        <select
+          value={music.captureMethod}
+          onChange={(e) => handleCaptureMethodChange(e.target.value as MusicCaptureMethod)}
+          className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500"
+        >
+          <option value="auto">🔄 Автоматически (Рекомендуется)</option>
+          <option value="extension">🌐 Только браузер (Расширение)</option>
+          {systemInfo?.supportedMethods.includes('winrt') && (
+            <option value="winrt">💻 Системный (Windows Media)</option>
+          )}
+          {systemInfo?.supportedMethods.includes('mpris') && (
+            <option value="mpris">🐧 Системный (Linux MPRIS)</option>
+          )}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          {music.captureMethod === 'auto' && 'Будут использоваться все доступные источники'}
+          {music.captureMethod === 'extension' && 'Данные будут получаться только из браузерного расширения'}
+          {music.captureMethod === 'winrt' && 'Данные будут получаться только из системного API Windows'}
+          {music.captureMethod === 'mpris' && 'Данные будут получаться только из системного API Linux'}
+        </p>
       </div>
+
+      {/* Статус расширения */}
+      {showExtensionSettings && (
+        <div className="bg-gray-700/50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-gray-200 font-medium">Настройки расширения</label>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${extensionStatus.connected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span className="text-sm text-gray-400">
+                {extensionStatus.connected ? 'Подключено' : 'Не подключено'}
+              </span>
+            </div>
+          </div>
+          
+          {!extensionStatus.connected && (
+            <p className="text-xs text-yellow-400 mb-3">
+              ⚠️ Расширение не подключено. Установите его и откройте браузер.
+            </p>
+          )}
+
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={music.integrations.yandexMusic}
+                onChange={() => handleIntegrationChange('yandexMusic')}
+                className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-gray-200">Yandex Music</span>
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={music.integrations.vkMusic}
+                onChange={() => handleIntegrationChange('vkMusic')}
+                className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-gray-200">VK Music</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Настройки системного захвата */}
+      {showSystemSettings && (
+        <div className="bg-gray-700/50 rounded-lg p-4">
+          <label className="text-gray-200 font-medium block mb-3">
+            Настройки системного захвата
+          </label>
+          
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={music.allowVideoContent}
+              onChange={(e) => updateSettings('music', { allowVideoContent: e.target.checked })}
+              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+            />
+            <span className="text-gray-200">Показывать информацию о видео-контенте (YouTube, фильмы)</span>
+          </label>
+          <p className="text-xs text-gray-500 mt-1 ml-6">
+            Если выключено, виджет будет показывать информацию только о музыке. Видео (YouTube, фильмы) будут игнорироваться (по возможности).
+          </p>
+        </div>
+      )}
 
       {/* Показывать обложку */}
       <div className="flex items-center justify-start space-x-3">

@@ -2,7 +2,6 @@ import { AppSettings, PartialSettings } from "../../shared/types";
 
 export type AppCategory = 'music' | 'chat' | 'auction' | 'general' | 'about';
 
-
 export interface DashboardState {
     activeCategory: AppCategory;
     settings: AppSettings;

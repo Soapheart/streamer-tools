@@ -14,6 +14,57 @@ import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { WebSocketServer } from 'ws';
 import { WSGateway } from './core/wsGateway';
 import { fileURLToPath } from 'url';
+import { ChildProcess, spawn } from 'child_process';
+
+// Добавляем дочерний процесс для прослушивания медиа-событий
+let mediaListenerProcess: ChildProcess | null = null;
+
+function startMediaListener() {
+  if (process.platform !== 'win32') {
+    console.log('⚠️ MediaListener only works on Windows, skipping...');
+    return;
+  }
+
+  // Определяем путь к exe в зависимости от режима
+  let exePath: string;
+  
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    exePath = path.join(
+      process.cwd(), 
+      'sidecar', 
+      'WinMediaListener', 
+      'bin', 
+      'Release', 
+      'net8.0-windows10.0.22621.0', 
+      'win-x64', 
+      'publish', 
+      'WinMediaListener.exe'
+    );
+  } else {
+    exePath = path.join(process.resourcesPath, 'WinMediaListener.exe');
+  }
+
+  try {
+    mediaListenerProcess = spawn(exePath, [], { 
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true, 
+    });
+
+    mediaListenerProcess.stdout?.on('data', (data) => {
+      console.log(`[MediaListener] ${data.toString().trim()}`);
+    });
+
+    mediaListenerProcess.stderr?.on('data', (data) => {
+      console.error(`[MediaListener Error] ${data.toString().trim()}`);
+    });
+    mediaListenerProcess.on('close', (code) => {
+      console.log(`[MediaListener] exited with code ${code}`);
+    });
+  } catch (error) {
+    console.error('Failed to start MediaListener:', error);
+  }
+}
+
 
 let storage: ElectronStoreAdapter;
 
@@ -89,9 +140,19 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-
+  createWindow();
+  startWidgetServer();
+  startMediaListener();
   // Инициализация хранилища
   storage = new ElectronStoreAdapter();
+  registerSettingsHandlers(storage, musicAdapter);
+
+  storage.onDidChange((newSettings) => {
+    BrowserWindow.getAllWindows().forEach(win => {
+      win.webContents.send('settings:updated', newSettings);
+    });
+  });
+
 
   try{
     const currentSettings = storage.getSettings();
@@ -103,10 +164,7 @@ app.whenReady().then(() => {
     console.error('Failed to load settings on startup:', error);
   }
 
-  registerSettingsHandlers(storage, musicAdapter);
-  createWindow();
 
-  startWidgetServer();
 
   // === Обработчик открытия внешних ссылок ===
   ipcMain.handle('open-external', async (_event, url: string) => {
@@ -123,12 +181,33 @@ app.whenReady().then(() => {
   });
 });
 
+app.on('before-quit', () => {
+  if (mediaListenerProcess) {
+    mediaListenerProcess.kill();
+  }
+});
+
+ipcMain.handle('get-system-info', async () => {
+  const platform = process.platform;
+  const supportedMethods: string[] = ['extension', 'auto'];
+  if (platform === 'win32') {
+    supportedMethods.push('winrt');
+  } else if (platform === 'linux') {
+    supportedMethods.push('mpris');
+  }
+  return { platform, supportedMethods };
+});
+
+ipcMain.handle('get-extension-status', ()=>{
+  return musicAdapter.getExtensionStatus();
+})
+
 ipcMain.on('widget:settings:update', (_event, {widget, settings}) => {
   console.log('Received widget settings update:', { widget, settings });
   if( widget === 'music'){
-    // musicAdapter.broadcastSettings(settings);
+    musicAdapter.broadcastSettings(settings);
   }
-})
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

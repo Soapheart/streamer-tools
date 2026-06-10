@@ -28,11 +28,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
             yandexMusic: true,
             vkMusic: false,
         },
+        captureMethod: 'auto',
+        allowVideoContent: false,
     },
     chat: { 
         enabled: true 
     },
     auction: { 
         enabled: true 
-    }
+    },
 };

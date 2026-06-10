@@ -42,6 +42,6 @@ chrome.runtime.onMessage.addListener((msg) => {
       payload: lastTrack
     }));
 
-    console.log("[OFFSCREEN → WS]", lastTrack.title);
+    console.log("[OFFSCREEN → WS]", lastTrack);
   }
 });

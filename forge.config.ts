@@ -10,6 +10,9 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    extraResource: [
+      'sidecar/WinMediaListener/bin/Release/net8.0-windows10.0.22621.0/win-x64/publish/WinMediaListener.exe'
+    ],
   },
   rebuildConfig: {},
   makers: [

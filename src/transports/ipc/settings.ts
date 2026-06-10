@@ -8,12 +8,12 @@ export function registerSettingsHandlers(
   storage: ElectronStoreAdapter,
   musicAdapter?: MusicWidgetAdapter
 ) {
-  ipcMain.handle('get-settings', () => {
-    try{
-      return storage.getSettings();
-    }catch (error) {
-      console.error('Failed to get settings:', error);
-      return null;
+  ipcMain.handle('settings:get', async () => {
+    try {
+      return await storage.getSettings();
+    } catch (error) {
+      console.error('❌ Error getting settings:', error);
+      throw error;
     }
   });
 

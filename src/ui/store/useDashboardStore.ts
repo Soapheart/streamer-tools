@@ -4,7 +4,31 @@ import { DEFAULT_SETTINGS } from '../../shared/constants';
 import { DashboardState } from '../types';
 
 // Дефолтные настройки
-const defaultSettings: AppSettings = DEFAULT_SETTINGS
+const defaultSettings: AppSettings = DEFAULT_SETTINGS;
+
+// === Утилита для глубокого слияния объектов ===
+function isObject(item: any): item is Record<string, any> {
+  return item && typeof item === 'object' && !Array.isArray(item);
+}
+
+function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+  const output = { ...target };
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach((key) => {
+      if (isObject(source[key])) {
+        if (!(key in target) || !isObject(target[key])) {
+          (output as any)[key] = source[key];
+        } else {
+          (output as any)[key] = deepMerge(target[key] as any, source[key] as any);
+        }
+      } else {
+        (output as any)[key] = source[key];
+      }
+    });
+  }
+  return output;
+}
+
 
 function debounce<T extends (...args: any[]) => void>(
   func: T, 
@@ -31,12 +55,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   
   updateSettings: (category, updates) => {
     set((state) => {
+      const updatedCategorySettings = deepMerge(state.settings[category] || {}, updates);
       const newSettings = {
         ...state.settings,
-        [category]: { ...state.settings[category], ...updates },
+        [category]: updatedCategorySettings,
       };
       // Автосохранение
-      get()._saveToStorage({ [category]: updates });
+      get()._saveToStorage(newSettings);
       debouncedSendToWidget(category, updates);
       return { settings: newSettings };
     });
@@ -52,7 +77,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   _loadFromStorage: async () => {
     try {
       const saved = await window.electronAPI.settings.get();
-      get().loadSettings(saved);
+      const mergedSettings = deepMerge(defaultSettings, saved || {});
+      get().loadSettings(mergedSettings);
     } catch (error) {
       console.warn('⚠️ Could not load settings:', error);
     }
@@ -60,7 +86,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   
   _subscribeToStorage: () => {
     return window.electronAPI.settings.subscribe((settings) => {
-      get().loadSettings(settings);
+      const mergedSettings = deepMerge(defaultSettings, settings || {});
+      get().loadSettings(mergedSettings);
     });
   },
 }));
