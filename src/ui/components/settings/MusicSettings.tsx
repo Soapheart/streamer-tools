@@ -21,7 +21,7 @@ interface ExtensionStatus {
 
 export const MusicSettings: React.FC = () => {
   const { settings, updateSettings } = useDashboardStore();
-  const music = settings.music;
+  const musicSettings = settings.music;
 
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus>({
@@ -53,8 +53,8 @@ export const MusicSettings: React.FC = () => {
   const handleIntegrationChange = (selected: IntegrationKey) => {
     updateSettings('music', {
       integrations: {
-        ...music.integrations,
-        [selected]: !music.integrations[selected]
+        ...musicSettings.integrations,
+        [selected]: !musicSettings.integrations[selected]
       }
     });
   };
@@ -63,8 +63,8 @@ export const MusicSettings: React.FC = () => {
     updateSettings('music', { captureMethod: method });
   }
 
-  const showExtensionSettings = music.captureMethod === 'extension' || music.captureMethod === 'auto';
-  const showSystemSettings = music.captureMethod === 'winrt' || music.captureMethod === 'mpris' || music.captureMethod === 'auto';
+  const showExtensionSettings = musicSettings.captureMethod === 'extension' || musicSettings.captureMethod === 'auto';
+  const showSystemSettings = musicSettings.captureMethod === 'winrt' || musicSettings.captureMethod === 'mpris' || musicSettings.captureMethod === 'auto';
 
 
   return (
@@ -97,7 +97,7 @@ export const MusicSettings: React.FC = () => {
       <div>
         <label className="text-gray-200 block mb-2 font-medium">Источник данных</label>
         <select
-          value={music.captureMethod}
+          value={musicSettings.captureMethod}
           onChange={(e) => handleCaptureMethodChange(e.target.value as MusicCaptureMethod)}
           className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500"
         >
@@ -111,10 +111,10 @@ export const MusicSettings: React.FC = () => {
           )}
         </select>
         <p className="text-xs text-gray-500 mt-1">
-          {music.captureMethod === 'auto' && 'Будут использоваться все доступные источники'}
-          {music.captureMethod === 'extension' && 'Данные будут получаться только из браузерного расширения'}
-          {music.captureMethod === 'winrt' && 'Данные будут получаться только из системного API Windows'}
-          {music.captureMethod === 'mpris' && 'Данные будут получаться только из системного API Linux'}
+          {musicSettings.captureMethod === 'auto' && 'Будут использоваться все доступные источники'}
+          {musicSettings.captureMethod === 'extension' && 'Данные будут получаться только из браузерного расширения'}
+          {musicSettings.captureMethod === 'winrt' && 'Данные будут получаться только из системного API Windows'}
+          {musicSettings.captureMethod === 'mpris' && 'Данные будут получаться только из системного API Linux'}
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export const MusicSettings: React.FC = () => {
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={music.integrations.yandexMusic}
+                checked={musicSettings.integrations.yandexMusic}
                 onChange={() => handleIntegrationChange('yandexMusic')}
                 className="w-4 h-4 text-purple-600 focus:ring-purple-500"
               />
@@ -150,7 +150,7 @@ export const MusicSettings: React.FC = () => {
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={music.integrations.vkMusic}
+                checked={musicSettings.integrations.vkMusic}
                 onChange={() => handleIntegrationChange('vkMusic')}
                 className="w-4 h-4 text-purple-600 focus:ring-purple-500"
               />
@@ -170,7 +170,7 @@ export const MusicSettings: React.FC = () => {
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={music.allowVideoContent}
+              checked={musicSettings.allowVideoContent}
               onChange={(e) => updateSettings('music', { allowVideoContent: e.target.checked })}
               className="w-4 h-4 text-purple-600 focus:ring-purple-500"
             />
@@ -187,7 +187,7 @@ export const MusicSettings: React.FC = () => {
         <input
           type="checkbox"
           id="showCover"
-          checked={music.showCover}
+          checked={musicSettings.showCover}
           onChange={(e) => updateSettings('music', { showCover: e.target.checked })}
           className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500"
         />
@@ -200,7 +200,7 @@ export const MusicSettings: React.FC = () => {
       <div>
         <label className="text-gray-200 block mb-2 font-medium">Тема</label>
         <select
-          value={music.theme}
+          value={musicSettings.theme}
           onChange={(e) => updateSettings('music', { theme: e.target.value as keyof typeof THEME_PRESETS })}
           className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         >
@@ -215,13 +215,13 @@ export const MusicSettings: React.FC = () => {
       {/* Прозрачность фона */}
       <div>
         <label className="text-gray-200 block mb-2 font-medium">
-          Прозрачность фона: <span className="text-purple-400">{music.bgTransparency}%</span>
+          Прозрачность фона: <span className="text-purple-400">{musicSettings.bgTransparency}%</span>
         </label>
         <input
           type="range"
           min="0"
           max="100"
-          value={music.bgTransparency}
+          value={musicSettings.bgTransparency}
           onChange={(e) => updateSettings('music', { bgTransparency: Number(e.target.value) })}
           className="w-full accent-purple-600"
         />
@@ -233,14 +233,14 @@ export const MusicSettings: React.FC = () => {
       {/* Размер шрифта */}
       <div>
         <label className="text-gray-200 block mb-2 font-medium">
-          Размер шрифта: <span className="text-purple-400">{music.fontSize}px</span>
+          Размер шрифта: <span className="text-purple-400">{musicSettings.font.size}px</span>
         </label>
         <input
           type="range"
           min="16"
           max="36"
-          value={music.fontSize}
-          onChange={(e) => updateSettings('music', { fontSize: Number(e.target.value) })}
+          value={musicSettings.font.size}
+          onChange={(e) => updateSettings('music', { font: { ...musicSettings.font, size: Number(e.target.value) } })}
           className="w-full accent-purple-600"
         />
       </div>

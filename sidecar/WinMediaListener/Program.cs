@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
@@ -10,14 +12,19 @@ class Program
     private static GlobalSystemMediaTransportControlsSession? _currentSession;
     private const string WS_URL = "ws://127.0.0.1:3000/ws/music";
     
-    // Переменные для защиты от дублей (Debounce)
-    private static string _lastSentTrackId = "";
-    private static DateTime _lastSentTime = DateTime.MinValue;
-    private const int DEBOUNCE_MS = 500; // Игнорировать повторные события в течение 500 мс
-
+    // === ОТЛАДКА ===
+    private static int _coverCounter = 0;
+    private static readonly string CoversFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug_covers");
+    
+    // === DEBOUNCE ЛОГИКА ===
+    private static CancellationTokenSource? _debounceCts;
+    private static readonly int DEBOUNCE_DELAY_MS = 800; // Ждём 800мс после последнего события
+    
     static async Task Main(string[] args)
     {
         Console.WriteLine("[MediaListener] Starting...");
+        Directory.CreateDirectory(CoversFolder);
+        Console.WriteLine($"[MediaListener] Debug covers will be saved to: {CoversFolder}");
         
         _sessionManager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
         _sessionManager.CurrentSessionChanged += OnCurrentSessionChanged;
@@ -36,9 +43,11 @@ class Program
         GlobalSystemMediaTransportControlsSessionManager sender,
         object args)
     {
+        Console.WriteLine($"\n🔔 [{DateTime.Now:HH:mm:ss.fff}] CurrentSessionChanged event!");
         var session = sender.GetCurrentSession();
         if (session != null)
         {
+            Console.WriteLine($"   SourceApp: {session.SourceAppUserModelId}");
             await HandleSessionAsync(session);
         }
     }
@@ -55,23 +64,50 @@ class Program
         session.MediaPropertiesChanged += OnMediaPropertiesChanged;
         session.PlaybackInfoChanged += OnPlaybackInfoChanged;
         
-        await SendMediaInfoAsync(session);
+        // Запускаем debounce для отправки
+        await ScheduleSendAsync(session, "HandleSession");
     }
 
     private static async void OnMediaPropertiesChanged(
         GlobalSystemMediaTransportControlsSession session,
         object args)
     {
-        await SendMediaInfoAsync(session);
+        Console.WriteLine($"\n🎵 [{DateTime.Now:HH:mm:ss.fff}] MediaPropertiesChanged event!");
+        await ScheduleSendAsync(session, "MediaPropertiesChanged");
     }
 
     private static async void OnPlaybackInfoChanged(
         GlobalSystemMediaTransportControlsSession session,
         object args)
     {
-        // Статус воспроизведения можно отправлять отдельно, если нужно
         var playbackInfo = session.GetPlaybackInfo();
-        Console.WriteLine($"[MediaListener] Status: {playbackInfo?.PlaybackStatus}");
+        Console.WriteLine($"\n▶️  [{DateTime.Now:HH:mm:ss.fff}] PlaybackInfoChanged: {playbackInfo?.PlaybackStatus}");
+    }
+
+    // === НОВАЯ ЛОГИКА: Debounce на отправку ===
+    private static async Task ScheduleSendAsync(GlobalSystemMediaTransportControlsSession session, string eventName)
+    {
+        // Отменяем предыдущий таймер, если он был
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        Console.WriteLine($"   ⏳ Scheduling send in {DEBOUNCE_DELAY_MS}ms (event: {eventName})");
+
+        try
+        {
+            // Ждём DEBOUNCE_DELAY_MS, но если придёт новое событие, мы отменим этот таймер
+            await Task.Delay(DEBOUNCE_DELAY_MS, token);
+            
+            // Если дошли сюда, значит новых событий не было - отправляем
+            Console.WriteLine($"   ✅ Debounce completed, sending data...");
+            await SendMediaInfoAsync(session);
+        }
+        catch (TaskCanceledException)
+        {
+            // Таймер был отменён новым событием - ничего не делаем
+            Console.WriteLine($"   ⏭️ Debounce cancelled by new event");
+        }
     }
 
     private static async Task SendMediaInfoAsync(GlobalSystemMediaTransportControlsSession session)
@@ -79,24 +115,20 @@ class Program
         try
         {
             var mediaProps = await session.TryGetMediaPropertiesAsync();
-            if (mediaProps == null) return;
-
-            // Создаем уникальный идентификатор текущего трека
-            string currentTrackId = $"{mediaProps.Artist} - {mediaProps.Title}";
-            TimeSpan timeSinceLastSend = DateTime.Now - _lastSentTime;
-
-            // ЗАЩИТА ОТ ДУБЛЕЙ:
-            // Если трек тот же самый И прошло меньше 500 мс с последней отправки -> игнорируем
-            if (currentTrackId == _lastSentTrackId && timeSinceLastSend.TotalMilliseconds < DEBOUNCE_MS)
+            if (mediaProps == null)
             {
-                return; 
+                Console.WriteLine("   ⚠️ MediaProperties is NULL");
+                return;
             }
 
-            // Обновляем "последнее отправленное" состояние
-            _lastSentTrackId = currentTrackId;
-            _lastSentTime = DateTime.Now;
-
+            string currentTrackId = $"{mediaProps.Artist} - {mediaProps.Title}";
+            Console.WriteLine($"   📝 Final track: {currentTrackId}");
+            Console.WriteLine($"   📊 PlaybackType: {mediaProps.PlaybackType}");
+            Console.WriteLine($"   📊 Album: {mediaProps.AlbumTitle ?? "null"}");
+            
+            // === Обрабатываем обложку ===
             string? coverBase64 = null;
+            
             if (mediaProps.Thumbnail != null)
             {
                 using var stream = await mediaProps.Thumbnail.OpenReadAsync();
@@ -106,21 +138,9 @@ class Program
                 reader.ReadBytes(bytes);
                 coverBase64 = Convert.ToBase64String(bytes);
             }
- 
-            string sourceApp = session.SourceAppUserModelId ?? "Unknown";
-            string categorizedSource = "unknown";
-
-            // Простая классификация источника
-            if (sourceApp.Contains("Spotify", StringComparison.OrdinalIgnoreCase)) {
-                categorizedSource = "spotify";
-            } else if (sourceApp.Contains("YandexMusic", StringComparison.OrdinalIgnoreCase)) {
-                categorizedSource = "yandex-desktop";
-            } else if (sourceApp.Contains("Chrome", StringComparison.OrdinalIgnoreCase) || 
-                    sourceApp.Contains("msedge", StringComparison.OrdinalIgnoreCase) || 
-                    sourceApp.Contains("Firefox", StringComparison.OrdinalIgnoreCase)) {
-                categorizedSource = "browser";
-            } else {
-                categorizedSource = "other-app";
+            else
+            {
+                Console.WriteLine("   🖼️ Thumbnail is NULL");
             }
 
             var trackData = new
@@ -131,20 +151,20 @@ class Program
                     title = mediaProps.Title ?? "Unknown",
                     artist = mediaProps.Artist ?? "Unknown",
                     cover = coverBase64 != null ? $"data:image/jpeg;base64,{coverBase64}" : null,
-                    source = "winrt",              // <-- Указываем, что источник - это WinRT API
-                    platform = categorizedSource, // <-- Добавляем классифицированный источник
-                    rawAppId = sourceApp        // <-- Для отладки (например, "Chrome")
+                    contentType = mediaProps.PlaybackType.ToString().ToLower(),
+                    source = "winrt"
                 }
             };
 
             var json = JsonSerializer.Serialize(trackData);
-            Console.WriteLine($"[MediaListener] Sent: {mediaProps.Artist} - {mediaProps.Title}");
+            Console.WriteLine($"   📤 SENDING to WS: {mediaProps.Artist} - {mediaProps.Title}");
+            Console.WriteLine($"   📤 Cover in payload: {(coverBase64 != null ? "YES" : "NO")}");
             
             await SendToWebSocketAsync(json);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MediaListener] Error: {ex.Message}");
+            Console.WriteLine($"   ❌ Error: {ex.Message}");
         }
     }
 
@@ -162,10 +182,11 @@ class Program
                 CancellationToken.None);
             
             await client.CloseAsync(System.Net.WebSockets.WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+            Console.WriteLine("   ✅ WS send successful");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MediaListener] WS Error (is server running?): {ex.Message}");
+            Console.WriteLine($"   ❌ WS Error: {ex.Message}");
         }
     }
 }

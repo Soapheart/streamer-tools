@@ -31,18 +31,11 @@ export interface BaseWidgetConfig {
 }
 
 // === Настройки музыки ===
-// В будущем можно удалить fontSize и bgTransparency
 export interface MusicWidgetConfig extends BaseWidgetConfig {
   showCover: boolean;
   theme: keyof typeof THEME_PRESETS;
   bgTransparency: number;
-  colors: {
-    background: string,
-    text?: string,
-    textSecondary?: string,
-    accent?: string,
-  };
-  fonts: {
+  font: {
     size?: number,
     family?: string,
     weight?: string
@@ -51,7 +44,6 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
     shadow: string,
     borderRadius: number,
   };
-  fontSize: number;
   widgetHeight: number;
   widgetWidth: number;
   integrations: {

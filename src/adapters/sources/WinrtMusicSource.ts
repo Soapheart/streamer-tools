@@ -1,9 +1,7 @@
+import { WidgetAdapter } from '../ports/WidgetPort';
 
-import { WidgetAdapter } from '../ports/WidgetPort'; // Или ваш базовый интерфейс
 import { WebSocketServer } from 'ws';
 
-// Примечание: этот пакет нужно установить: npm install windows-media-control
-// И настроить electron-rebuild для его компиляции под версию Electron.
 let mediaControl: any = null;
 
 export class WinrtMusicSource {
@@ -60,8 +58,8 @@ export class WinrtMusicSource {
       payload: {
         title: session.title || 'Неизвестный трек',
         artist: session.artist || 'Неизвестный исполнитель',
-        cover: session.thumbnailUrl || null, // WinRT часто отдает локальный путь или URL
-        background_color: null, // Можно вычислить на фронтенде по обложке
+        cover: session.thumbnailUrl || null,
+        background_color: null,
       }
     };
 

@@ -48,7 +48,7 @@ const debouncedSendToWidget = debounce((category: string, settings: unknown) => 
 }, 300);
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
-  activeCategory: 'general',
+  activeCategory: 'music',
   settings: defaultSettings,
   
   setActiveCategory: (category) => set({ activeCategory: category }),

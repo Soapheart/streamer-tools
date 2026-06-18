@@ -57,6 +57,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^11.0.2",
     "express": "^5.2.1",
+    "node-vibrant": "^4.0.4",
     "react-router-dom": "^7.13.1",
     "tailwind-merge": "^3.5.0",
     "ws": "^8.19.0",

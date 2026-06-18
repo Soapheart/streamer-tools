@@ -4,7 +4,7 @@ import { ExternalLinkButton } from '../ExternalLinkButton';
 // Версия приложения (можно брать из package.json)
 const APP_VERSION = import.meta.env?.PACKAGE_VERSION || '0.0.1';
 
-export const AboutSettings: React.FC = () => {
+export const About: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Заголовок и версия */}

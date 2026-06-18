@@ -6,8 +6,10 @@ export interface ThemePreset {
     text: string;            // цвет текста
     textSecondary: string;   // цвет вторичного текста (исполнитель)
     accent: string;          // акцентный цвет (прогресс-бар, иконки)
+    bgTransparency?: number;       // прозрачность фона (0-100)
   };
-  fonts: {
+  font: {
+    size?: number;         // размер шрифта в пикселях
     family: string;
     weight: string;
   };
@@ -27,7 +29,8 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       textSecondary: '#cccccc',
       accent: '#1db954',
     },
-    fonts: {
+    font: {
+      size: 16,
       family: 'Inter, sans-serif',
       weight: '600',
     },
@@ -36,6 +39,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       borderRadius: 12,
     },
   },
+  
   dark: {
     id: 'dark',
     name: 'Тёмная',
@@ -45,7 +49,8 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       textSecondary: '#a0a0a0',
       accent: '#bb86fc',
     },
-    fonts: {
+    font: {
+      size: 16,
       family: 'Inter, sans-serif',
       weight: '600',
     },
@@ -54,6 +59,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       borderRadius: 12,
     },
   },
+
   light: {
     id: 'light',
     name: 'Светлая',
@@ -63,7 +69,8 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       textSecondary: '#666666',
       accent: '#6200ee',
     },
-    fonts: {
+    font: {
+      size: 16,
       family: 'Inter, sans-serif',
       weight: '600',
     },
@@ -72,6 +79,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       borderRadius: 12,
     },
   },
+  
   neon: {
     id: 'neon',
     name: 'Неон',
@@ -81,7 +89,8 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       textSecondary: '#ff00ff',
       accent: '#ffff00',
     },
-    fonts: {
+    font: {
+      size: 16,
       family: 'Orbitron, sans-serif',
       weight: '700',
     },

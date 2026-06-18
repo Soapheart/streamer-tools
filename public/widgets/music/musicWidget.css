@@ -1,135 +1,43 @@
 :root {
-  /* Базовый цвет фона (RGB) */
-  --widget-bg-rgb: 0, 0, 0;
-  
-  /* Прозрачность: 0 = полностью прозрачный, 1 = непрозрачный */
-  /* Значение по умолчанию: 0.8 (80%) */
-  --bg-transparency: 0.8;
-  
-  /* Цвет с применением прозрачности */
-  --widget-bg-color: rgba(var(--widget-bg-rgb), var(--bg-transparency));
-  --font-size-base: 24px;
+  /* Значения по умолчанию (на случай, если тема не пришла) */
+  --widget-bg-color: #1a1a1a;
+  --text-color: #ffffff;
+  --text-secondary-color: #a0a0a0;
+  --accent-color: #bb86fc;
+  --font-family: 'Inter', sans-serif;
+  --font-weight: 600;
+  --font-size: 16px;
+  --border-radius: 12px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-/* Темы */
-
-[data-theme="dark"] .widget {
-  --widget-bg-rgb: 20, 20, 30;
-  color: #fff;
-}
-
-[data-theme="light"] .widget {
-  --widget-bg-rgb: 240, 240, 250;
-  color: #222;
-  text-shadow: none;
-}
-
-
-[data-theme="transparent"] .widget {
-  --widget-bg-rgb: 0, 0, 0;
-  --bg-transparency: 0.3;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Динамическая тема (по обложке) — обрабатывается в JS */
-[data-theme="dynamic"] .widget {
-  /* Здесь можно добавить анимацию перехода */
-  transition: background-color 0.3s ease;
-}
-
-body {
-  margin: 0;
-  font-family: sans-serif;
-  color: white;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
-}
-
-#cover{
-  object-fit: cover;
-  width: 64px;
-  height: 64px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  background-color: rgba(0,0,0,0.2);
-  display: block;
-}
-#cover.hidden {
-  display: none !important;
-}
-
-.widget {
-  user-select: none;
-  
-  /* ✅ АДАПТИВНАЯ ШИРИНА */
-  width: 100%;
-  max-width: 600px;
-  min-width: 200px;
-  
-  text-shadow:
-    0 1px 2px rgba(0,0,0,.8),
-    0 0 6px rgba(0,0,0,.6);
-  font-size: var(--font-size-base);
-  font-weight: bold;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  /* ✅ ФОН С ПРОЗРАЧНОСТЬЮ */
+#widget {
   background-color: var(--widget-bg-color);
-  padding: 8px;
-  border-radius: 8px;
-  
-  -webkit-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
-  -moz-box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
-  box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
-}
-
-.text-wrapper {
-  position: relative;
-  overflow: hidden;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-  flex-grow: 1;
-  padding: 0 20px;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 20px,
-    black calc(100% - 20px),
-    transparent
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 20px,
-    black calc(100% - 20px),
-    transparent
-  );
+  align-items: center;
+  gap: 12px;
 }
 
 .title {
+  color: var(--text-color);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
 }
 
 .artist {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 2px 0 0;
-  opacity: 0.8;
-  font-size: 0.75em;
+  color: var(--text-secondary-color);
+  font-size: calc(var(--font-size) - 4px);
+}
+
+#cover {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
 }

@@ -2,7 +2,9 @@
 import { WebSocket } from 'ws';
 import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
 import { MusicCaptureMethod, MusicTrack, MusicWidgetConfig, WSMessageType } from '../../shared/types';
-import { trace } from 'node:console';
+import { ColorExtractorService } from '../../core/services/colorExtractorService';
+import { THEME_PRESETS, ThemePreset } from '../../shared/themes';
+
 
 export class MusicWidgetAdapter implements WidgetAdapter {
   readonly path = '/ws/music';
@@ -23,13 +25,62 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   private extensionConnected = false;
   private extensionLastSeen = 0;
 
+
+  private ColorExtractorService = new ColorExtractorService();
+
+
+  private async resolveThemePreset(): Promise<ThemePreset> {
+    const themeId = this.lastSettings?.theme || 'dark';
+    const preset = THEME_PRESETS[themeId];
+
+
+    const resolvedPreset: ThemePreset = JSON.parse(JSON.stringify(preset));
+
+    // Подмена фона для динамической темы на основе обложки трека
+    if (themeId === 'dynamic' && this.lastTrack?.cover) {
+      const palette = await this.ColorExtractorService.extract(this.lastTrack.cover);
+      console.log('🎨 Extracted color palette for dynamic theme:', palette);
+      if(palette.darkVibrant){
+        resolvedPreset.colors.background = palette.darkVibrant;
+      }else if(palette.dominant){
+        resolvedPreset.colors.background = palette.dominant;
+      }
+    }
+    // Прозрачность фона применяется поверх любого базового цвета темы
+    if(this.lastSettings?.bgTransparency !== undefined){
+      const alpha = this.lastSettings.bgTransparency / 100;
+      resolvedPreset.colors.background = this.applyTransparencyToColor(resolvedPreset.colors.background, alpha);
+    }
+    // Добавляем размер шрифта из настроек, если он есть
+    if(this.lastSettings?.font?.size !== undefined){
+      resolvedPreset.font.size = this.lastSettings.font.size;
+    }
+
+    return resolvedPreset;
+  }
+
+  private async broadcastTheme(): Promise<void> {
+    const themePreset = await this.resolveThemePreset();
+    const payload = {
+      ...this.lastSettings,
+      theme: themePreset,
+    };
+    for (const client of this.clients) {
+      this.sendToClient(client, {
+        type: WSMessageType.SETTINGS_UPDATE,
+        payload: payload
+      });
+    }
+  }
+
+
   // ─────────────────────────────────────────────────────────
   // Хуки жизненного цикла (вызываются WSGateway)
   // ─────────────────────────────────────────────────────────
 
-  onConnect(client: WSClient): void {
+  async onConnect(client: WSClient): Promise<void> {
     this.clients.add(client);
-    console.log(`🎵 Music widget connected: ${client.id}`);
+    // console.log(`🎵 Music widget connected: ${client.id}`);
 
     // Отправляем последнее известное состояние новому клиенту
     if (this.lastTrack) {
@@ -38,10 +89,14 @@ export class MusicWidgetAdapter implements WidgetAdapter {
         payload: this.lastTrack
       });
     }
+
     if (this.lastSettings) {
+      // console.log('Sending last settings to new client:', this.lastSettings);
+      const themePreset = await this.resolveThemePreset();
+      // console.log('Resolved theme preset for new client:', themePreset);
       this.sendToClient(client, {
         type: WSMessageType.SETTINGS_UPDATE,
-        payload: this.transformSettings(this.lastSettings)
+        payload: { ...this.lastSettings, theme: themePreset  }
       });
     }
   }
@@ -100,7 +155,8 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   /**
    * Обновление настроек из Electron UI (через ipcMain)
    */
-  public broadcastSettings(settings: Partial<MusicWidgetConfig>): void {
+  public async broadcastSettings(settings: Partial<MusicWidgetConfig>): Promise<void> {
+    
     // Обновляем флаги интеграций
     if (settings.integrations) {
       this.activeIntegrations = {
@@ -121,18 +177,12 @@ export class MusicWidgetAdapter implements WidgetAdapter {
     // Кэшируем настройки для новых клиентов
     this.lastSettings = { ...this.lastSettings, ...settings };
 
-    // Трансформируем и рассылаем всем подключённым виджетам
-    const uiPayload = this.transformSettings(settings);
+    // Отправляем обновлённую тему
+    await this.broadcastTheme();
     
-    for (const client of this.clients) {
-      this.sendToClient(client, {
-        type: WSMessageType.SETTINGS_UPDATE,
-        payload: uiPayload
-      });
-    }
-
+    // Если тема dynamic и есть трек — обновляем цвет фона
     if(this.affectsTrackRendering(settings) && this.lastTrack){
-      this.broadcastTrack(this.lastTrack);
+      await this.broadcastTrack(this.lastTrack);
     }
 
   }
@@ -145,20 +195,12 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   // Приватная логика
   // ─────────────────────────────────────────────────────────
 
-  private handleIncomingTrack(track: MusicTrack): void {
+  private async handleIncomingTrack(track: MusicTrack): Promise<void> {
     const source = track.source;
     const platform = track.platform;
     const contentType = track.contentType || 'music';
 
-    console.log('🔍 Incoming track details:', {
-      source: track.source,
-      platform: track.platform,
-      contentType: track.contentType,
-      title: track.title,
-      artist: track.artist,
-      captureMethod: this.captureMethod,
-      allowVideoContent: this.allowVideoContent
-    });
+    this.lastTrack = track; // Кэшируем последний трек для новых клиентов
 
     if (!this.isSourceAllowed(source)) {
       console.log(`🚫 Source "${source}" blocked by captureMethod "${this.captureMethod}"`);
@@ -203,8 +245,13 @@ export class MusicWidgetAdapter implements WidgetAdapter {
       }
     }
 
-  console.log(`✅ Allowing track from ${source}: ${track.artist} - ${track.title}`);
-    this.broadcastTrack(track);
+    if(this.lastSettings?.theme === 'dynamic'){
+      await this.broadcastTheme();
+    }
+
+    console.log(`✅ Allowing track from ${source}: ${track.artist} - ${track.title}`);
+    
+    await this.broadcastTrack(track);
   }
 
   private isSourceAllowed(source: string): boolean {
@@ -231,43 +278,16 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   }
 
 
-  private broadcastTrack(track: MusicTrack): void {
-    this.lastTrack = track;
-    
+  private async broadcastTrack(track: MusicTrack): Promise<void> {
     const payload = { ...track };
 
-    // Applying transparency
-    if(this.lastSettings?.bgTransparency !== undefined && track.background_color){
-      const alpha = this.lastSettings.bgTransparency / 100;
-      payload.background_color = this.applyTransparencyToColor(track.background_color, alpha);
-    }
-    console.log("Broadcasting track to widget:", payload);
     for (const client of this.clients) {
       this.sendToClient(client, {
         type: WSMessageType.TRACK_UPDATE,
-        payload: payload
+        payload
       });
-    }
   }
-
-  /**
-   * Трансформация настроек из формата UI (0-100) в формат CSS (0-1)
-   */
-  private transformSettings(settings: Partial<MusicWidgetConfig>): Partial<MusicWidgetConfig> {
-    const payload: Partial<MusicWidgetConfig> = {};
-    
-    if (settings.theme !== undefined) payload.theme = settings.theme;
-    
-    if (settings.bgTransparency !== undefined) {
-      // Конвертируем 0-100 (UI slider) → 0-1 (CSS alpha)
-      payload.bgTransparency = settings.bgTransparency / 100;
-    }
-    
-    if (settings.fontSize !== undefined) payload.fontSize = settings.fontSize;
-    if (settings.showCover !== undefined) payload.showCover = settings.showCover;
-
-    return payload;
-  }
+}
 
 private applyTransparencyToColor(color: string, alpha: number): string {
   // Уже есть альфа — заменяем его
