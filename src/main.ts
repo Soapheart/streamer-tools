@@ -1,18 +1,16 @@
 import * as path from 'path';
 import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron';
-import express from 'express';
-import cors from 'cors';
-import http from 'http';
 
 //Адаптер для работы с electron-store и транспорты для IPC
 import { registerSettingsHandlers } from './transports/ipc/settings';
 import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
+
 import { WidgetAdapter } from './core/ports/WidgetPort';
 import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
 // import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
 import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
-import { WebSocketServer } from 'ws';
-import { WSGateway } from './core/wsGateway';
+import { startWidgetServer } from './server'
+
 import { fileURLToPath } from 'url';
 import { ChildProcess, spawn } from 'child_process';
 
@@ -80,42 +78,6 @@ const widgetAdapters: WidgetAdapter[] = [
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Инициализация Express сервера для виджетов OBS
-function startWidgetServer() {
-  const widgetApp = express();
-  widgetApp.use(cors());
-
-  // Health check endpoint
-  widgetApp.get('/health', (req, res) => {
-    console.log('✅ Health check requested');
-    res.json({ status: 'ok', service: 'streamer-tools-widget' });
-  });
-
-  // Раздача статических файлов для виджетов
-  const widgetsPath = path.join(process.cwd(), 'public', 'widgets');
-  widgetApp.use('/widgets', express.static(widgetsPath));
-
-  const server = http.createServer(widgetApp);
-  const wss = new WebSocketServer({ server });
-  const wsGateway = new WSGateway(wss);
-
-  widgetAdapters.forEach(adapter => {
-    console.log(`🔌 Setting up widget adapter: ${adapter.path}`);
-    wsGateway.register(adapter);
-  });
-
-  wsGateway.start();
-
-
-  const PORT = 3000;
-  server.listen(PORT, '127.0.0.1', () => {
-    console.log(`🚀 Widget server running at http://127.0.0.1:${PORT}`);
-  }).on('error', (err) => {
-    console.error('❌ Widget server error:', err);
-  });
-
-  return { server, wss };
-}
 
 function createWindow() {
   Menu.setApplicationMenu(null); 
@@ -141,7 +103,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
-  startWidgetServer();
+  startWidgetServer(widgetAdapters);
   startMediaListener();
   // Инициализация хранилища
   storage = new ElectronStoreAdapter();

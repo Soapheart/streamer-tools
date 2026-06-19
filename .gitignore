@@ -56,3 +56,8 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+
+# === Debug ===
+.sidecar/WinMediaListener/obj/Debug/
+.sidecar/WinMediaListener/bin/Debug/
