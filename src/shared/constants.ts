@@ -1,5 +1,8 @@
 import { AppSettings } from './types';
 
+export const WIDGET_SERVER_PORT = 3000;
+export const WS_MUSIC_PATH = '/ws/music'
+
 export const DEFAULT_SETTINGS: AppSettings = {
     music: {
         enabled: true,

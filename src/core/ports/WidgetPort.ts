@@ -16,5 +16,5 @@ export interface WidgetAdapter {
   onDisconnect?(client: WSClient): void;
 
   getInitialState?(): unknown;
-  broadcastSettings?(settings: any): void; // для вызова из IPC
+  broadcastSettings?(settings: Record<string, unknown>): void; // для вызова из IPC
 }

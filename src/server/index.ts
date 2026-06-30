@@ -3,6 +3,8 @@ import cors from 'cors';
 import http from 'http';
 import * as path from 'path';
 
+import { WIDGET_SERVER_PORT } from '../shared/constants'
+
 import { WidgetAdapter } from '../core/ports/WidgetPort';
 import { WebSocketServer } from 'ws';
 import { WSGateway } from '../adapters/transports/wsGateway';
@@ -34,9 +36,8 @@ export function startWidgetServer(widgetAdapters: WidgetAdapter[]) {
   wsGateway.start();
 
 
-  const PORT = 3000;
-  server.listen(PORT, '127.0.0.1', () => {
-    console.log(`🚀 Widget server running at http://127.0.0.1:${PORT}`);
+  server.listen(WIDGET_SERVER_PORT, '127.0.0.1', () => {
+    console.log(`🚀 Widget server running at http://127.0.0.1:${WIDGET_SERVER_PORT}`);
   }).on('error', (err) => {
     console.error('❌ Widget server error:', err);
   });

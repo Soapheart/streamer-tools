@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WidgetAdapter, WSClient } from './ports/WidgetPort';
+import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
 import { IncomingMessage } from 'node:http';
 import { randomUUID } from 'crypto'; // явный импорт
 

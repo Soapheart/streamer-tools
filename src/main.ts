@@ -8,7 +8,7 @@ import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
 import { WidgetAdapter } from './core/ports/WidgetPort';
 import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
 // import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
-import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
+// import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { startWidgetServer } from './server'
 
 import { fileURLToPath } from 'url';
@@ -96,18 +96,25 @@ function createWindow() {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/$
-      {MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 }
 
 app.whenReady().then(() => {
+  console.log('🚀 App is ready, creating window...');
   createWindow();
   startWidgetServer(widgetAdapters);
   startMediaListener();
   // Инициализация хранилища
+  console.log('📦 Initializing storage...');
   storage = new ElectronStoreAdapter();
-  registerSettingsHandlers(storage, musicAdapter);
+  console.log('🔧 Registering IPC handlers...');
+  try{
+    registerSettingsHandlers(storage, musicAdapter);
+    console.log('✅ IPC handlers registered successfully!');
+  }catch (error) {
+    console.error('❌ FAILED to register IPC handlers:', error);
+  }
 
   storage.onDidChange((newSettings) => {
     BrowserWindow.getAllWindows().forEach(win => {

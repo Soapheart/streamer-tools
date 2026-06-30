@@ -14,7 +14,7 @@ function connect() {
     reconnectTimer = null;
   }
   console.log("Connecting to music WS...");
-  ws = new WebSocket("ws://127.0.0.1:3000/ws/music");
+  ws = new WebSocket(`ws://127.0.0.1:3000/ws/music`);
 
   ws.onopen = () => {
     console.log("Connected to music WS");

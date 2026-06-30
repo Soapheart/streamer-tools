@@ -1,5 +1,6 @@
 // adapters/widgets/MusicWidgetAdapter.ts
 import { WebSocket } from 'ws';
+import { WS_MUSIC_PATH } from '../../shared/constants';
 import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
 import { MusicCaptureMethod, MusicTrack, MusicWidgetConfig, WSMessageType } from '../../shared/types';
 import { ColorExtractorService } from '../../core/services/colorExtractorService';
@@ -7,7 +8,7 @@ import { THEME_PRESETS, ThemePreset } from '../../shared/themes';
 
 
 export class MusicWidgetAdapter implements WidgetAdapter {
-  readonly path = '/ws/music';
+  readonly path = WS_MUSIC_PATH;
   
   private clients = new Set<WSClient>();
   private lastTrack: MusicTrack | null = null;

@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import { ElectronStoreAdapter } from '../../adapters/storage/ElectronStoreAdapter';
 import { MusicWidgetAdapter } from '../../adapters/widgets/MusicWidgetAdapter';
 import { AppSettings } from '../../shared/types';
-import { ca } from 'zod/locales';
+// import { ca } from 'zod/locales';
 
 export function registerSettingsHandlers(
   storage: ElectronStoreAdapter,
@@ -29,14 +29,5 @@ export function registerSettingsHandlers(
       console.error('Failed to save settings:', error);
       return { success: false, error };
     }
-  });
-
-  ipcMain.on('settings:subscribe', (event) => {
-    const unsubscribe = storage.onDidChange((newSettings) => {
-      event.sender.send('settings:updated', newSettings);
-    });
-    event.sender.once('closed', () => {
-      unsubscribe();
-    });
   });
 }
