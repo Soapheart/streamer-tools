@@ -36,6 +36,7 @@
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/tmi.js": "^1.8.6",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -60,6 +61,7 @@
     "node-vibrant": "^4.0.4",
     "react-router-dom": "^7.13.1",
     "tailwind-merge": "^3.5.0",
+    "tmi.js": "^1.8.5",
     "ws": "^8.19.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"

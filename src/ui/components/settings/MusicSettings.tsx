@@ -102,7 +102,7 @@ export const MusicSettings: React.FC = () => {
           className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500"
         >
           <option value="auto">🔄 Автоматически (Рекомендуется)</option>
-          <option value="extension">🌐 Только браузер (Расширение)</option>
+          <option value="extension">🌐 Только браузер (Расширение (Legacy))</option>
           {systemInfo?.supportedMethods.includes('winrt') && (
             <option value="winrt">💻 Системный (Windows Media)</option>
           )}

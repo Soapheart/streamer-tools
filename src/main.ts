@@ -7,7 +7,8 @@ import { ElectronStoreAdapter } from './adapters/storage/ElectronStoreAdapter';
 
 import { WidgetAdapter } from './core/ports/WidgetPort';
 import { MusicWidgetAdapter } from './adapters/widgets/MusicWidgetAdapter';
-// import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
+import { ChatWidgetAdapter } from './adapters/widgets/ChatWidgetAdapter';
+import { TwitchChatService } from './adapters/sources/TwitchChatService';
 // import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { startWidgetServer } from './server'
 
@@ -68,10 +69,16 @@ let storage: ElectronStoreAdapter;
 
 // === Реестр виджетов ===
 const musicAdapter = new MusicWidgetAdapter();
+const chatAdapter = new ChatWidgetAdapter();
+
+const twitchService = new TwitchChatService((msg)=>{
+  chatAdapter.broadcastMessage(msg);
+})
+
 const widgetAdapters: WidgetAdapter[] = [
   musicAdapter,
-  // new ChatWidgetAdapter(),
-  // new AuctionWidgetAdapter(),
+  chatAdapter,
+  // AuctionWidgetAdapter(),
 ];
 
 // === Конфигурация для загрузки UI ===
@@ -133,6 +140,10 @@ app.whenReady().then(() => {
     console.error('Failed to load settings on startup:', error);
   }
 
+
+  const TEST_CHANNEL = 'browjey';
+  console.log(`[Init] Запуск тестового подключения к Twitch: ${TEST_CHANNEL}`);
+  twitchService.connect(TEST_CHANNEL);
 
 
   // === Обработчик открытия внешних ссылок ===

@@ -67,8 +67,13 @@ export interface MusicTrack {
 
 // === Настройки чата ===
 export interface ChatWidgetConfig extends BaseWidgetConfig {
-  // В будущем добавим: showAvatars, fontSize, colors и т.д.
+    twitchChannel: string; // Название канала (без знака #)
+    twitchToken: string;   // OAuth токен (можно оставить пустым для публичных чатов)
+    fontSize: number;      // Размер шрифта для OBS
+    bgTransparency: number; // Прозрачность фона (0-100)
+    showBadges: boolean;   // Показывать ли значки (модератор, саб и т.д.)
 }
+
 
 // === Настройки аукциона ===
 export interface AuctionWidgetConfig extends BaseWidgetConfig {
