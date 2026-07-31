@@ -1,7 +1,7 @@
 // src/adapters/widgets/ChatWidgetAdapter.ts
 import { WebSocket } from 'ws';
 import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
-import { ChatMessage } from '../sources/TwitchChatService';
+import { ChatMessage } from '../../shared/types';
 
 export class ChatWidgetAdapter implements WidgetAdapter {
   readonly path = '/ws/chat';
@@ -40,6 +40,18 @@ export class ChatWidgetAdapter implements WidgetAdapter {
     const payload = {
       type: 'CHAT_MESSAGE',
       payload: msg,
+    };
+
+    for (const client of this.clients) {
+      this.sendToClient(client, payload);
+    }
+  }
+
+  public broadcastSettings(settings: Record<string, unknown>): void {
+    console.log('💬 [ChatAdapter] Broadcasting settings update to clients');
+    const payload = {
+      type: 'SETTINGS_UPDATE',
+      payload: settings,
     };
 
     for (const client of this.clients) {

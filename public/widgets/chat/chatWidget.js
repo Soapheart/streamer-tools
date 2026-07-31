@@ -26,7 +26,10 @@ function connect() {
       if (data.type === "PONG") {
         return; // Игнорируем ответ на пинг
       }
-
+      if (data.type === "SETTINGS_UPDATE" && data.payload) {
+        applySettings(data.payload);
+        return;
+      }
       if (data.type === "CHAT_MESSAGE") {
         renderMessage(data.payload);
       }
@@ -44,6 +47,27 @@ function connect() {
     if (pingInterval) clearInterval(pingInterval);
     setTimeout(connect, RECONNECT_DELAY);
   };
+}
+
+function applySettings(settings) {
+  const root = document.documentElement;
+  // Поддерживаем как полный объект настроек, так и вложенный appearance
+  const appearance = settings.appearance || settings; 
+
+  if (appearance.font?.size !== undefined) {
+    root.style.setProperty('--chat-font-size', `${appearance.font.size}px`);
+  }
+  
+  if (appearance.bgTransparency !== undefined) {
+    const alpha = appearance.bgTransparency / 100;
+    root.style.setProperty('--chat-bg-alpha', alpha);
+  }
+  
+  if (appearance.theme !== undefined) {
+    root.setAttribute('data-theme', appearance.theme);
+  }
+  
+  console.log("[ChatWidget] Settings applied:", appearance);
 }
 
 function renderMessage(msg) {

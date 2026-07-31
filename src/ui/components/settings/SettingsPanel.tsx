@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { MusicSettings } from './MusicSettings';
 import { About } from './About';
+import { ChatSettings } from './ChatSettings';
 
 // Заглушки для будущих категорий
 const PlaceholderSettings: React.FC<{ title: string }> = ({ title }) => (
@@ -20,7 +21,7 @@ export const SettingsPanel: React.FC = () => {
       case 'music':
         return <MusicSettings />;
       case 'chat':
-        return <PlaceholderSettings title="Чат" />;
+        return <ChatSettings />;
       case 'auction':
         return <PlaceholderSettings title="Аукцион" />;
       case 'about':

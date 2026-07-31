@@ -14,8 +14,9 @@ import { startWidgetServer } from './server'
 
 import { fileURLToPath } from 'url';
 import { ChildProcess, spawn } from 'child_process';
+import { ChatWidgetConfig } from './shared/types';
 
-// Добавляем дочерний процесс для прослушивания медиа-событий
+// Дочерний процесс для прослушивания медиа-событий
 let mediaListenerProcess: ChildProcess | null = null;
 
 function startMediaListener() {
@@ -74,6 +75,8 @@ const chatAdapter = new ChatWidgetAdapter();
 const twitchService = new TwitchChatService((msg)=>{
   chatAdapter.broadcastMessage(msg);
 })
+let currentTwitchChannel = '';
+let currentTwitchToken: string | undefined = '';
 
 const widgetAdapters: WidgetAdapter[] = [
   musicAdapter,
@@ -84,6 +87,33 @@ const widgetAdapters: WidgetAdapter[] = [
 // === Конфигурация для загрузки UI ===
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+function syncTwitchConnection (chatSettings: ChatWidgetConfig) {
+  const twitchSource = chatSettings.sources?.twitch;
+  const newChannel = twitchSource?.enabled ? twitchSource.channel : '';
+  const newToken = twitchSource?.enabled ? twitchSource.token : '';
+
+  const isChannelChanged = newChannel !== currentTwitchChannel;
+  const isTokenChanged = newToken !== currentTwitchToken;
+
+  if (isChannelChanged || isTokenChanged) {
+    console.log('[Twitch] Connection settings changed, reconnecting...');
+    twitchService.disconnect();
+
+    currentTwitchChannel = newChannel;
+    currentTwitchToken = newToken;
+
+    if(newChannel){
+      console.log(`[Twitch] Connecting to channel: "${newChannel}"`);
+      twitchService.connect(newChannel, newToken);
+    }else{
+      console.log('[Twitch] Twitch chat is disabled or no channel specified. Disconnected.');
+    }
+  }else{
+    console.log('[Twitch] Connection settings unchanged, no action taken.');
+  }
+}
 
 
 function createWindow() {
@@ -133,18 +163,14 @@ app.whenReady().then(() => {
   try{
     const currentSettings = storage.getSettings();
     if (currentSettings?.music) {
-      // console.log('Initializing settings')
       musicAdapter.initialize(currentSettings.music);
+    }
+    if (currentSettings?.chat) {
+      syncTwitchConnection(currentSettings.chat);
     }
   } catch (error) {
     console.error('Failed to load settings on startup:', error);
   }
-
-
-  const TEST_CHANNEL = 'browjey';
-  console.log(`[Init] Запуск тестового подключения к Twitch: ${TEST_CHANNEL}`);
-  twitchService.connect(TEST_CHANNEL);
-
 
   // === Обработчик открытия внешних ссылок ===
   ipcMain.handle('open-external', async (_event, url: string) => {
@@ -165,6 +191,7 @@ app.on('before-quit', () => {
   if (mediaListenerProcess) {
     mediaListenerProcess.kill();
   }
+  twitchService.disconnect();
 });
 
 ipcMain.handle('get-system-info', async () => {
@@ -186,6 +213,13 @@ ipcMain.on('widget:settings:update', (_event, {widget, settings}) => {
   console.log('Received widget settings update:', { widget, settings });
   if( widget === 'music'){
     musicAdapter.broadcastSettings(settings);
+  }
+  else if (widget === 'chat'){
+    chatAdapter.broadcastSettings(settings);
+    const currentSettings = storage.getSettings();
+    if(currentSettings?.chat){
+      syncTwitchConnection(currentSettings.chat);
+    }
   }
 });
 

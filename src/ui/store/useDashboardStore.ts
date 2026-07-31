@@ -6,6 +6,9 @@ import { DashboardState } from '../types';
 // Дефолтные настройки
 const defaultSettings: AppSettings = DEFAULT_SETTINGS;
 
+const startupCategory: keyof AppSettings = 'music';
+const categories: Array<keyof AppSettings> = ['music', 'chat', 'auction'];
+
 // === Утилита для глубокого слияния объектов ===
 function isObject(item: any): item is Record<string, any> {
   return item && typeof item === 'object' && !Array.isArray(item);
@@ -42,13 +45,14 @@ function debounce<T extends (...args: any[]) => void>(
 }
 
 const debouncedSendToWidget = debounce((category: string, settings: unknown) => {
-  if (category === 'music' && window.electronAPI?.widget?.updateSettings) {
-    window.electronAPI.widget.updateSettings('music', settings);
+  if (!categories.includes(category as keyof AppSettings) || !window.electronAPI?.widget?.updateSettings) {
+    return;
   }
+  window.electronAPI.widget.updateSettings(category as typeof categories[number], settings);
 }, 300);
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
-  activeCategory: 'music',
+  activeCategory: startupCategory,
   settings: defaultSettings,
   
   setActiveCategory: (category) => set({ activeCategory: category }),

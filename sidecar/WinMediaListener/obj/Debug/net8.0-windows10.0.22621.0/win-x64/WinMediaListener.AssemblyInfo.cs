@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WinMediaListener")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+13943ae004930216b8016ab786f18d812ea6e1b5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cccc28c0349a22d5b6a87ee65349a6364c4ee61c")]
 [assembly: System.Reflection.AssemblyProductAttribute("WinMediaListener")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WinMediaListener")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

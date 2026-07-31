@@ -5,7 +5,8 @@ export enum WSMessageType {
   TRACK_UPDATE = 'TRACK_UPDATE',
   SETTINGS_UPDATE = 'SETTINGS_UPDATE',
   PING = 'PING',
-  PONG = 'PONG'
+  PONG = 'PONG',
+  CHAT_MESSAGE = 'CHAT_MESSAGE',
 }
 
 // === Через какой метод захватывать музыку ===
@@ -30,16 +31,18 @@ export interface BaseWidgetConfig {
   enabled: boolean;
 }
 
+interface FontSettings {
+  size?: number;
+  family?: string;
+  weight?: string;
+}
+
 // === Настройки музыки ===
 export interface MusicWidgetConfig extends BaseWidgetConfig {
   showCover: boolean;
   theme: keyof typeof THEME_PRESETS;
   bgTransparency: number;
-  font: {
-    size?: number,
-    family?: string,
-    weight?: string
-  };
+  font: FontSettings;
   effects: {
     shadow: string,
     borderRadius: number,
@@ -65,16 +68,6 @@ export interface MusicTrack {
     contentType?: 'music' | 'video' | 'unknown';
 }
 
-// === Настройки чата ===
-export interface ChatWidgetConfig extends BaseWidgetConfig {
-    twitchChannel: string; // Название канала (без знака #)
-    twitchToken: string;   // OAuth токен (можно оставить пустым для публичных чатов)
-    fontSize: number;      // Размер шрифта для OBS
-    bgTransparency: number; // Прозрачность фона (0-100)
-    showBadges: boolean;   // Показывать ли значки (модератор, саб и т.д.)
-}
-
-
 // === Настройки аукциона ===
 export interface AuctionWidgetConfig extends BaseWidgetConfig {
   // В будущем добавим: duration, startPrice и т.д.
@@ -95,3 +88,35 @@ export type StoreSchema = {
 // === Для частичных обновлений (удобно для форм) ===
 export type PartialSettings = Partial<AppSettings>;
 export type MusicSettings = Partial<MusicWidgetConfig>;
+
+
+type ChatSources = 'twitch' | 'youtube' | 'vk' | 'unknown';
+
+// === Тип сообщения чата ===
+export interface ChatMessage {
+  username: string;
+  color: string;
+  message: string;
+  badges?: Record<string, string>;
+  timestamp: number;
+  source: ChatSources;
+
+}
+
+interface SourceConfig {
+  enabled: boolean;
+  channel: string;
+  token?: string;
+}
+
+// === Настройки чата (для UI) ===
+export interface ChatWidgetConfig extends BaseWidgetConfig {
+    sources: Partial<Record<ChatSources, SourceConfig>>;
+    appearance: {
+      font: FontSettings;
+      theme: keyof typeof THEME_PRESETS;
+      bgTransparency: number;
+      showBadges: boolean;
+      maxMessages: number;
+    }
+}

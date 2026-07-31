@@ -1,13 +1,7 @@
 //adapters/sources/TwitchChatService.ts
 
 import tmi from 'tmi.js';
-
-export interface ChatMessage {
-  username: string;
-  color: string;
-  message: string;
-  timestamp: number;
-}
+import type { ChatMessage } from '../../shared/types';
 
 export class TwitchChatService {
   private client: tmi.Client | null = null;
@@ -17,7 +11,7 @@ export class TwitchChatService {
     this.onMessage = onMessage;
   }
 
-  connect(channel: string) {
+  connect(channel: string, token?: string) {
     if (!channel) return;
 
     if (this.client) {
@@ -42,6 +36,7 @@ export class TwitchChatService {
         color: tags.color || '#FFFFFF',
         message,
         timestamp: Date.now(),
+        source: 'twitch',
       });
     });
 

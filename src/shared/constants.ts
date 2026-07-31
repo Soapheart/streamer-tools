@@ -28,9 +28,27 @@ export const DEFAULT_SETTINGS: AppSettings = {
         allowVideoContent: false,
     },
     chat: { 
-        enabled: true 
+        enabled: true,
+        sources: {
+            twitch: {
+                enabled: true,
+                channel: '',
+                token: ''
+            },
+        },
+        appearance: {
+            font: {
+                size: 18,
+                family: 'Inter, sans-serif',
+                weight: '500'
+            },
+            theme: 'dark',
+            bgTransparency: 80,
+            showBadges: true,
+            maxMessages: 50,
+        },
     },
     auction: { 
-        enabled: true 
+        enabled: true, 
     },
 };
