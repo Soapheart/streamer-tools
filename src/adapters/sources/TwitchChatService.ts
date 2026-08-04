@@ -35,6 +35,7 @@ export class TwitchChatService {
         username: tags['display-name'] || tags.username || 'Anonymous',
         color: tags.color || '#FFFFFF',
         message,
+        badges: tags.badges || {},
         timestamp: Date.now(),
         source: 'twitch',
       });

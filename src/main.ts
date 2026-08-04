@@ -76,7 +76,7 @@ const twitchService = new TwitchChatService((msg)=>{
   chatAdapter.broadcastMessage(msg);
 })
 let currentTwitchChannel = '';
-let currentTwitchToken: string | undefined = '';
+let currentTwitchToken  = '';
 
 const widgetAdapters: WidgetAdapter[] = [
   musicAdapter,
@@ -166,6 +166,7 @@ app.whenReady().then(() => {
       musicAdapter.initialize(currentSettings.music);
     }
     if (currentSettings?.chat) {
+      chatAdapter.broadcastSettings(currentSettings.chat);
       syncTwitchConnection(currentSettings.chat);
     }
   } catch (error) {

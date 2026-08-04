@@ -1,13 +1,14 @@
 // src/adapters/widgets/ChatWidgetAdapter.ts
 import { WebSocket } from 'ws';
 import { WidgetAdapter, WSClient } from '../../core/ports/WidgetPort';
-import { ChatMessage } from '../../shared/types';
+import { ChatMessage, ChatWidgetConfig } from '../../shared/types';
 
 export class ChatWidgetAdapter implements WidgetAdapter {
   readonly path = '/ws/chat';
   
   private clients = new Set<WSClient>();
 
+  private lastSettings: Partial<ChatWidgetConfig> | null = null;
   // ─────────────────────────────────────────────────────────
   // Хуки жизненного цикла (вызываются WSGateway)
   // ─────────────────────────────────────────────────────────
@@ -47,7 +48,9 @@ export class ChatWidgetAdapter implements WidgetAdapter {
     }
   }
 
-  public broadcastSettings(settings: Record<string, unknown>): void {
+  public broadcastSettings(settings: Partial<ChatWidgetConfig>): void {
+    
+    this.lastSettings = { ...this.lastSettings, ...settings };
     console.log('💬 [ChatAdapter] Broadcasting settings update to clients');
     const payload = {
       type: 'SETTINGS_UPDATE',

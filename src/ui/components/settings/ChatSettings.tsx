@@ -9,7 +9,7 @@ export const ChatSettings: React.FC = () => {
   const { settings, updateSettings } = useDashboardStore();
   const chatSettings = settings.chat as ChatWidgetConfig;
   
-  const handleChatSourceUpdate = (sourceName: ChatWidgetConfig['sources'], field: 'channel' | 'token', value: string | boolean) => {
+  const handleChatSourceUpdate = (sourceName: keyof ChatWidgetConfig['sources'], field: 'channel' | 'token', value: string | boolean) => {
     const currentSources: ChatWidgetConfig['sources'] = chatSettings.sources || {};
     const currentSource = currentSources[sourceName] || { enabled: true, channel: '', token: '' };
     updateSettings('chat', {
@@ -71,7 +71,7 @@ export const ChatSettings: React.FC = () => {
           <input
             type="password"
             value={chatSettings.sources?.twitch?.token || ''}
-            onChange={(e) => handleTwitchUpdate('token', e.target.value)}
+            onChange={(e) => handleChatSourceUpdate('twitch', 'token', e.target.value)}
             placeholder="oauth:xxxxxxxxxxxxxxxx"
             className="w-full bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500"
           />
@@ -134,7 +134,7 @@ export const ChatSettings: React.FC = () => {
       </div>
 
       {/* Показывать бейджи */}
-      <div className="flex items-center justify-start space-x-3">
+      {/* <div className="flex items-center justify-start space-x-3">
         <input
           type="checkbox"
           id="showBadges"
@@ -145,7 +145,7 @@ export const ChatSettings: React.FC = () => {
         <label htmlFor="showBadges" className="text-gray-200 cursor-pointer">
           Показывать значки (Moderator, Subscriber, VIP, Prime)
         </label>
-      </div>
+      </div> */}
 
       {/* Подсказка про размеры в OBS */}
       <div className="bg-gray-700/50 rounded-lg p-4 text-sm text-gray-400">

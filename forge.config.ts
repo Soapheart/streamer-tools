@@ -11,7 +11,8 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     extraResource: [
-      'sidecar/WinMediaListener/bin/Release/net8.0-windows10.0.22621.0/win-x64/publish/WinMediaListener.exe'
+      'sidecar/WinMediaListener/bin/Release/net8.0-windows10.0.22621.0/win-x64/publish/WinMediaListener.exe', 
+      './public',
     ],
   },
   rebuildConfig: {},

@@ -2,13 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import * as path from 'path';
-
+import { fileURLToPath } from 'url';
+import { app } from 'electron';
 import { WIDGET_SERVER_PORT } from '../shared/constants'
 
 import { WidgetAdapter } from '../core/ports/WidgetPort';
 import { WebSocketServer } from 'ws';
 import { WSGateway } from '../adapters/transports/wsGateway';
 
+
+// Получаем __dirname для ESM модулей
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function startWidgetServer(widgetAdapters: WidgetAdapter[]) {
   const widgetApp = express();
@@ -20,9 +25,18 @@ export function startWidgetServer(widgetAdapters: WidgetAdapter[]) {
     res.json({ status: 'ok', service: 'streamer-tools-widget' });
   });
 
+  const isPackaged = app.isPackaged;
+  const widgetsPath = isPackaged
+    ? path.join(process.resourcesPath, 'public', 'widgets') // Для собранного приложения
+    : path.join(process.cwd(), 'public', 'widgets');        // Для разработки
+
+  console.log(`📂 Serving widgets from: ${widgetsPath}`);
   // Раздача статических файлов для виджетов
-  const widgetsPath = path.join(process.cwd(), 'public', 'widgets');
   widgetApp.use('/widgets', express.static(widgetsPath));
+
+  widgetApp.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+  });
 
   const server = http.createServer(widgetApp);
   const wss = new WebSocketServer({ server });

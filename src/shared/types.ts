@@ -1,3 +1,4 @@
+import { Badges } from "tmi.js";
 import { THEME_PRESETS } from "./themes";
 
 // === Типы сообщений для WebSocket ===
@@ -97,21 +98,20 @@ export interface ChatMessage {
   username: string;
   color: string;
   message: string;
-  badges?: Record<string, string>;
+  badges: Badges;
   timestamp: number;
   source: ChatSources;
-
 }
 
 interface SourceConfig {
   enabled: boolean;
   channel: string;
-  token?: string;
+  token: string;
 }
 
 // === Настройки чата (для UI) ===
 export interface ChatWidgetConfig extends BaseWidgetConfig {
-    sources: Partial<Record<ChatSources, SourceConfig>>;
+    sources: Record<ChatSources, SourceConfig>;
     appearance: {
       font: FontSettings;
       theme: keyof typeof THEME_PRESETS;

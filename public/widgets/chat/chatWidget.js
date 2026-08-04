@@ -66,6 +66,10 @@ function applySettings(settings) {
   if (appearance.theme !== undefined) {
     root.setAttribute('data-theme', appearance.theme);
   }
+
+  if(appearance.showBadges !== undefined) {
+    root.setAttribute('data-show-badges', appearance.showBadges ? 'true' : 'false');
+  }
   
   console.log("[ChatWidget] Settings applied:", appearance);
 }
@@ -77,6 +81,25 @@ function renderMessage(msg) {
     return;
   }
 
+  let badgesHtml = '';
+  const showBadges = document.documentElement.getAttribute('data-show-badges') === 'true';
+  if (showBadges && msg.badges && Object.keys(msg.badges).length > 0) {
+    for (const [badgeName, version] of Object.entries(msg.badges)) {
+      let icon = '';
+      // Простой маппинг популярных бейджей на эмодзи (гарантированно работает без сложных API)
+      switch (badgeName) {
+        case 'broadcaster': icon = '🎙️'; break;
+        case 'moderator': icon = '🛡️'; break;
+        case 'vip': icon = '💎'; break;
+        case 'subscriber': icon = '⭐'; break;
+        case 'premium': icon = '👑'; break; // Prime
+        case 'bits': icon = '💎'; break;
+        default: icon = `[${badgeName}]`; // Фоллбек для неизвестных бейджей
+      }
+      badgesHtml += `<span class="badge" title="${badgeName} (tier ${version})">${icon}</span>`;
+    }
+  }
+
   const el = document.createElement("div");
   el.className = "chat-message";
 
@@ -85,10 +108,11 @@ function renderMessage(msg) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  el.innerHTML =
-    '<span class="username" style="color:' + msg.color + '">' +
-    msg.username +
-    '</span>: <span class="text">' + safeMsg + '</span>';
+  el.innerHTML =`
+  ${badgesHtml}
+    <span class="username" style="color:${msg.color}">
+    ${msg.username}
+    </span>: <span class="text">${safeMsg}</span>`;
 
   container.appendChild(el);
 
