@@ -74,12 +74,17 @@ export interface AuctionWidgetConfig extends BaseWidgetConfig {
   // В будущем добавим: duration, startPrice и т.д.
 }
 
+export interface SystemSettings {
+  startWithSystem: boolean;
+  minimizeOnClose: boolean;
+}
 
 // === Полные настройки приложения (для хранения и UI) ===
 export interface AppSettings {
   music: MusicWidgetConfig;
   chat: ChatWidgetConfig;
   auction: AuctionWidgetConfig;
+  system: SystemSettings;
 }
 
 export type StoreSchema = {

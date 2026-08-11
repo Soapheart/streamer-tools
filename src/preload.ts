@@ -26,4 +26,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateSettings: (widget: string, settings: unknown) => 
       ipcRenderer.send('widget:settings:update', { widget, settings }),
   },
+  system: {
+    getStartWithSystem: () => ipcRenderer.invoke('system:get-start-with-system'),
+    setStartWithSystem: (enabled: boolean) => ipcRenderer.invoke('system:set-start-with-system', enabled),
+  }
 });

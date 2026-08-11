@@ -35,6 +35,21 @@ export const DEFAULT_SETTINGS: AppSettings = {
                 channel: '',
                 token: ''
             },
+            youtube: {
+                enabled: false,
+                channel: '',
+                token: ''
+            },
+            vk: {
+                enabled: false,
+                channel: '',
+                token: ''
+            },
+            unknown: {
+                enabled: false,
+                channel: '',
+                token: ''
+            },
         },
         appearance: {
             font: {
@@ -50,5 +65,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     },
     auction: { 
         enabled: true, 
+    },
+    system: {
+        startWithSystem: false,
+        minimizeOnClose: false,
     },
 };

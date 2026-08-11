@@ -10,6 +10,10 @@ export interface ElectronAPI {
   widget: {
     updateSettings: (widget: string, settings: unknown) => void;
   };
+  system: {
+    getStartWithSystem: () => Promise<boolean>;
+    setStartWithSystem: (enabled: boolean) => Promise<boolean>;
+  };
 }
 
 declare global {
