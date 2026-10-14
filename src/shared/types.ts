@@ -95,12 +95,14 @@ type ChatSources = 'twitch' | 'youtube' | 'vk' | 'unknown';
 
 // === Тип сообщения чата ===
 export interface ChatMessage {
+  id: string;
   username: string;
   color: string;
-  message: string;
+  text: string;
   badges: Badges;
   timestamp: number;
   source: ChatSources;
+  emotes: Record<string, string[]>;
 }
 
 interface SourceConfig {
