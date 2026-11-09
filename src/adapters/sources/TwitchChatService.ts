@@ -32,12 +32,14 @@ export class TwitchChatService {
       console.log(`[Twitch] MSG from ${tags['display-name']}: ${message}`); // ← Логируем каждое сообщение
 
       this.onMessage({
+        id: tags.id || '',
         username: tags['display-name'] || tags.username || 'Anonymous',
         color: tags.color || '#FFFFFF',
-        message,
+        text: message,
         badges: tags.badges || {},
         timestamp: Date.now(),
         source: 'twitch',
+        emotes: tags.emotes || {},
       });
     });
 

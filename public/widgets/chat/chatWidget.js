@@ -1,4 +1,6 @@
 // public/widgets/chat/chatWidget.js
+import { parseTwitchEmotes } from "./emoteParser.js"; // Убедитесь, что расширение .js указано (требование ES modules)
+
 const RECONNECT_DELAY = 2000;
 const MAX_MESSAGES = 50;
 let ws = null;
@@ -11,7 +13,6 @@ function connect() {
 
   ws.onopen = () => {
     console.log("[ChatWidget] ✅ Connected successfully!");
-    // Запускаем периодический PING, чтобы соединение не разрывалось
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "PING" }));
@@ -23,9 +24,7 @@ function connect() {
     try {
       const data = JSON.parse(event.data);
       
-      if (data.type === "PONG") {
-        return; // Игнорируем ответ на пинг
-      }
+      if (data.type === "PONG") return;
       if (data.type === "SETTINGS_UPDATE" && data.payload) {
         applySettings(data.payload);
         return;
@@ -51,23 +50,19 @@ function connect() {
 
 function applySettings(settings) {
   const root = document.documentElement;
-  // Поддерживаем как полный объект настроек, так и вложенный appearance
   const appearance = settings.appearance || settings; 
 
   if (appearance.font?.size !== undefined) {
     root.style.setProperty('--chat-font-size', `${appearance.font.size}px`);
   }
-  
   if (appearance.bgTransparency !== undefined) {
     const alpha = appearance.bgTransparency / 100;
     root.style.setProperty('--chat-bg-alpha', alpha);
   }
-  
   if (appearance.theme !== undefined) {
     root.setAttribute('data-theme', appearance.theme);
   }
-
-  if(appearance.showBadges !== undefined) {
+  if (appearance.showBadges !== undefined) {
     root.setAttribute('data-show-badges', appearance.showBadges ? 'true' : 'false');
   }
   
@@ -76,47 +71,84 @@ function applySettings(settings) {
 
 function renderMessage(msg) {
   const container = document.getElementById("chat-container");
-  if (!container) {
-    console.error("[ChatWidget] ERROR: #chat-container not found in HTML!");
-    return;
-  }
+  if (!container) return;
 
+  // 🔍 ОТЛАДКА: Посмотрите в консоль браузера! 
+  // Если msg.emotes равно undefined, проблема в TwitchChatService.ts (Шаг 1)
+  console.log("[ChatWidget] Получено сообщение:", msg);
+
+  const el = document.createElement("div");
+  el.className = "chat-message";
+  if (msg.id) el.dataset.id = msg.id;
+
+  // 1. Бейджи
   let badgesHtml = '';
   const showBadges = document.documentElement.getAttribute('data-show-badges') === 'true';
   if (showBadges && msg.badges && Object.keys(msg.badges).length > 0) {
     for (const [badgeName, version] of Object.entries(msg.badges)) {
       let icon = '';
-      // Простой маппинг популярных бейджей на эмодзи (гарантированно работает без сложных API)
       switch (badgeName) {
         case 'broadcaster': icon = '🎙️'; break;
         case 'moderator': icon = '🛡️'; break;
         case 'vip': icon = '💎'; break;
         case 'subscriber': icon = '⭐'; break;
-        case 'premium': icon = '👑'; break; // Prime
+        case 'premium': icon = '👑'; break;
         case 'bits': icon = '💎'; break;
-        default: icon = `[${badgeName}]`; // Фоллбек для неизвестных бейджей
+        default: icon = `[${badgeName}]`;
       }
-      badgesHtml += `<span class="badge" title="${badgeName} (tier ${version})">${icon}</span>`;
+      badgesHtml += `<span class="badge" title="${badgeName}">${icon}</span>`;
     }
   }
+  
+  if (badgesHtml) {
+    const badgeContainer = document.createElement('span');
+    badgeContainer.className = 'badges-container';
+    badgeContainer.innerHTML = badgesHtml;
+    el.appendChild(badgeContainer);
+  }
 
-  const el = document.createElement("div");
-  el.className = "chat-message";
+  // 2. Имя пользователя
+  const usernameEl = document.createElement("span");
+  usernameEl.className = "username";
+  usernameEl.style.color = msg.color || "#FFFFFF";
+  usernameEl.textContent = `${msg.username}: `;
+  el.appendChild(usernameEl);
 
-  const safeMsg = msg.message
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  // 3. Тело сообщения с парсингом
+  // Берем ИСХОДНЫЙ текст до какой-либо санитизации, чтобы индексы смайлов совпали
+  const rawText = msg.text || msg.message || ""; 
+  
+  const chunks = parseTwitchEmotes(rawText, msg.emotes);
 
-  el.innerHTML =`
-  ${badgesHtml}
-    <span class="username" style="color:${msg.color}">
-    ${msg.username}
-    </span>: <span class="text">${safeMsg}</span>`;
+  const bodyEl = document.createElement("span");
+  bodyEl.className = "text";
 
+  chunks.forEach(chunk => {
+    if (chunk.type === 'text') {
+      // Санитизируем ТОЛЬКО текстовые части ПОСЛЕ нарезки
+      const safeText = chunk.content
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      
+      bodyEl.appendChild(document.createTextNode(safeText));
+    } 
+    else if (chunk.type === 'emote') {
+      const img = document.createElement('img');
+      img.src = chunk.url;
+      img.alt = chunk.content;
+      img.title = chunk.content;
+      img.className = 'chat-emote';
+      img.loading = 'lazy';
+      bodyEl.appendChild(img);
+    }
+  });
+
+  el.appendChild(bodyEl);
   container.appendChild(el);
 
-  while (container.children.length > MAX_MESSAGES) {
+  // Очистка старых сообщений
+  while (container.children.length > 50) {
     container.removeChild(container.firstChild);
   }
 }

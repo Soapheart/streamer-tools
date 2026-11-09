@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Web\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj": {}
+    "C:\\Code\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj": {}
   },
   "projects": {
-    "D:\\Web\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj": {
+    "C:\\Code\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Web\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj",
+        "projectUniqueName": "C:\\Code\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj",
         "projectName": "WinMediaListener",
-        "projectPath": "D:\\Web\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj",
-        "packagesPath": "C:\\Users\\Владислав\\.nuget\\packages\\",
-        "outputPath": "D:\\Web\\streamer-tools\\sidecar\\WinMediaListener\\obj\\",
+        "projectPath": "C:\\Code\\streamer-tools\\sidecar\\WinMediaListener\\WinMediaListener.csproj",
+        "packagesPath": "C:\\Users\\Vladislav\\.nuget\\packages\\",
+        "outputPath": "C:\\Code\\streamer-tools\\sidecar\\WinMediaListener\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Владислав\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Vladislav\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0-windows10.0.22621.0"
@@ -39,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.300"
+        "SdkAnalysisLevel": "10.0.400"
       },
       "frameworks": {
         "net8.0-windows10.0.22621.0": {
@@ -49,7 +49,7 @@
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.27, )",
+              "version": "[8.0.30, )",
               "autoReferenced": true
             }
           },
@@ -67,23 +67,23 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.Windows.SDK.NET.Ref",
@@ -91,11 +91,11 @@
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.30, 8.0.30]"
             }
           ],
           "frameworkReferences": {
@@ -106,7 +106,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

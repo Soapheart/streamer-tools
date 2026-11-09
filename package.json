@@ -12,7 +12,9 @@
     "package": "npm run version:bump && electron-forge package",
     "make": "npm run version:bump && electron-forge make",
     "publish": "npm run version:bump && electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+
+    "build:sidecar": "cd sidecar/WinMediaListener && dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true"
   },
   "keywords": [],
   "author": {
