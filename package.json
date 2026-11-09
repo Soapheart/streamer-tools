@@ -1,7 +1,7 @@
 {
   "name": "streamer-tools",
   "productName": "streamer-tools",
-  "version": "2026.11.02",
+  "version": "2026.11.09",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "private": true,
@@ -13,7 +13,6 @@
     "make": "npm run version:bump && electron-forge make",
     "publish": "npm run version:bump && electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-
     "build:sidecar": "cd sidecar/WinMediaListener && dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true"
   },
   "keywords": [],
