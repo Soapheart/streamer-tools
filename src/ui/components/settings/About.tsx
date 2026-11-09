@@ -33,7 +33,7 @@ export const About: React.FC = () => {
           <span>🔗</span> Полезные ссылки
         </h3>
         
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <ExternalLinkButton
             url="https://github.com/Soapheart/streamer-tools"
             label="GitHub репозиторий"

@@ -107,7 +107,7 @@ export const SettingsPanel: React.FC = () => {
 
   return (
     <main className="flex-1 bg-gray-900 p-6 overflow-y-auto">
-      <div className="max-w-3xl mx-auto">
+      <div className="mx-auto">
         <h1 className="text-2xl font-bold text-white mb-6 capitalize">
           {activeCategory}
         </h1>

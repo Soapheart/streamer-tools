@@ -1,16 +1,17 @@
 {
   "name": "streamer-tools",
   "productName": "streamer-tools",
-  "version": "1.0.0",
+  "version": "2026.11.02",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "private": true,
   "type": "module",
   "scripts": {
+    "version:bump": "tsx scripts/bump-version.ts",
     "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
+    "package": "npm run version:bump && electron-forge package",
+    "make": "npm run version:bump && electron-forge make",
+    "publish": "npm run version:bump && electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
@@ -47,6 +48,7 @@
     "eslint-plugin-import": "^2.32.0",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "utf-8-validate": "^6.0.6",
     "vite": "^5.4.21"

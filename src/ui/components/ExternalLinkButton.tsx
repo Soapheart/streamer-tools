@@ -53,8 +53,7 @@ export const ExternalLinkButton: React.FC<ExternalLinkButtonProps> = ({
 
   // === Динамический контент кнопки ===
  const renderContent = () => {
-  // Базовые стили для текста: предотвращаем перенос и фиксируем мин. ширину
-  const textClass = "inline-block min-w-[250px] text-center transition-opacity duration-200";
+  const textClass = "inline-block w-full text-center transition-opacity duration-200";
   
   if (feedback === 'success') {
     return (
@@ -106,7 +105,8 @@ export const ExternalLinkButton: React.FC<ExternalLinkButtonProps> = ({
       disabled={feedback !== 'idle'}
       className={`
         ${getVariantStyles()} 
-        ${sizes[size]} 
+        ${sizes[size]}
+        cursor-pointer
         rounded-lg transition-all duration-200 flex items-center gap-2 font-medium
         disabled:opacity-70 disabled:cursor-wait
         ${className}
