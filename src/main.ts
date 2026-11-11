@@ -83,6 +83,8 @@ const twitchService = new TwitchChatService((msg) => {
 });
 let currentTwitchChannel = "";
 let currentTwitchToken = "";
+// Multiple channel to-do
+// let activeTwitchConnections: Array<{channel: string, token:string}> = [];
 
 const widgetAdapters: WidgetAdapter[] = [
   musicAdapter,
@@ -95,7 +97,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function syncTwitchConnection(chatSettings: ChatWidgetConfig) {
-  const twitchSource = chatSettings.sources?.twitch;
+
+  // Multiple channel to-do
+  // const newConnections = (chatSettings.sources?.twitch || []).filter(src => src.enabled && src.channel.trim()).map(src=> ({channel: src.channel.trim(), token: src.token}));
+
+  const twitchSource = chatSettings.sources?.twitch[0];
   const newChannel = twitchSource?.enabled ? twitchSource.channel : "";
   const newToken = twitchSource?.enabled ? twitchSource.token : "";
 

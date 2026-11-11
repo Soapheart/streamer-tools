@@ -30,26 +30,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
     chat: { 
         enabled: true,
         sources: {
-            twitch: {
+            twitch: [{
+                id:  'default-twitch-1',
                 enabled: true,
                 channel: '',
                 token: ''
-            },
-            youtube: {
-                enabled: false,
-                channel: '',
-                token: ''
-            },
-            vk: {
-                enabled: false,
-                channel: '',
-                token: ''
-            },
-            unknown: {
-                enabled: false,
-                channel: '',
-                token: ''
-            },
+            }],
+            youtube: [],
+            vk: [],
         },
         appearance: {
             font: {
@@ -58,8 +46,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
                 weight: '500'
             },
             theme: 'dark',
+            animation: 'slide-up',
             bgTransparency: 80,
             showBadges: true,
+            colorizeNicknames: true,
+            showTimestamps: false,
+        },
+        filters: {
+            hideBotMessages: false,
+            hideCommands: false,
+            hideBannedUsers: false,
+            stopWords: [],
+            ignoredUsers: [],
             maxMessages: 50,
         },
     },

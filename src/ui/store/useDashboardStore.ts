@@ -54,9 +54,10 @@ const debouncedSendToWidget = debounce((category: string, settings: unknown) => 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   activeCategory: startupCategory,
   settings: defaultSettings,
-  
+  sidebarCollapsed: false,
   setActiveCategory: (category) => set({ activeCategory: category }),
   
+  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   updateSettings: (category, updates) => {
     set((state) => {
       const updatedCategorySettings = deepMerge(state.settings[category] || {}, updates);
@@ -81,8 +82,40 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   _loadFromStorage: async () => {
     try {
       const saved = await window.electronAPI.settings.get();
+      
+      // 🔄 Миграция: если twitch — не массив, преобразуем из старой объектной структуры
+      if (saved?.chat?.sources?.twitch && !Array.isArray(saved.chat.sources.twitch)) {
+        const oldTwitch = saved.chat.sources.twitch as any;
+        console.warn('🔄 Миграция: twitch был объектом, преобразуем в массив');
+        saved.chat.sources.twitch = [{
+          id: 'migrated-twitch-1',
+          enabled: oldTwitch.enabled ?? true,
+          channel: oldTwitch.channel || '',
+          token: oldTwitch.token || ''
+        }];
+      }
+      
+      // 🔄 Миграция: если sources вообще нет или неполный
+      if (!saved?.chat?.sources) {
+        saved = {
+          ...saved,
+          chat: {
+            ...saved?.chat,
+            sources: { twitch: [], youtube: [], vk: [] }
+          }
+        };
+      }
+      
+      // 🔄 Миграция: если filters нет (старая версия без фильтрации)
+      if (saved?.chat && !saved.chat.filters) {
+        saved.chat.filters = DEFAULT_SETTINGS.chat.filters;
+      }
+      
       const mergedSettings = deepMerge(defaultSettings, saved || {});
       get().loadSettings(mergedSettings);
+      
+      // 🔄 Сохраняем мигрированные данные обратно в storage, чтобы больше не мигрировать
+      get()._saveToStorage(mergedSettings);
     } catch (error) {
       console.warn('⚠️ Could not load settings:', error);
     }

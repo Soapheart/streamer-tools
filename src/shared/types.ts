@@ -96,7 +96,28 @@ export type PartialSettings = Partial<AppSettings>;
 export type MusicSettings = Partial<MusicWidgetConfig>;
 
 
-type ChatSources = 'twitch' | 'youtube' | 'vk' | 'unknown';
+export interface ChatSource{
+  id: string;
+  enabled: boolean;
+  channel: string;
+  token: string;
+}
+
+export interface ChatSources{
+  twitch: ChatSource[];
+  youtube: ChatSource[];
+  vk: ChatSource[];
+}
+
+export interface ChatFilters {
+  hideBotMessages: boolean;
+  hideCommands: boolean;
+  hideBannedUsers: boolean;
+  stopWords: string[];
+  ignoredUsers: string[];
+  maxMessages: number;
+}
+
 
 // === Тип сообщения чата ===
 export interface ChatMessage {
@@ -106,24 +127,23 @@ export interface ChatMessage {
   text: string;
   badges: Badges;
   timestamp: number;
-  source: ChatSources;
+  source: keyof ChatSources;
   emotes: Record<string, string[]>;
-}
-
-interface SourceConfig {
-  enabled: boolean;
-  channel: string;
-  token: string;
 }
 
 // === Настройки чата (для UI) ===
 export interface ChatWidgetConfig extends BaseWidgetConfig {
-    sources: Record<ChatSources, SourceConfig>;
-    appearance: {
-      font: FontSettings;
-      theme: keyof typeof THEME_PRESETS;
-      bgTransparency: number;
-      showBadges: boolean;
-      maxMessages: number;
-    }
+  sources: ChatSources;
+  
+  appearance: {
+    font: FontSettings;
+    theme: keyof typeof THEME_PRESETS;
+    animation?: 'none' | 'fade' | 'slide-up' | 'slide-right' | 'pop' | 'flip';
+    bgTransparency: number;
+    showBadges: boolean;
+    colorizeNicknames: boolean;
+    showTimestamps: boolean;
+  };
+  
+  filters: ChatFilters;
 }

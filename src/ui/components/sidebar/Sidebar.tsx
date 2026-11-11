@@ -22,19 +22,43 @@ const categories: { id: AppCategory; label: string }[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const { activeCategory, setActiveCategory } = useDashboardStore();
+  const { activeCategory, setActiveCategory, sidebarCollapsed, toggleSidebar } = useDashboardStore();
 
   return (
-    <aside className="w-64 bg-gray-800 border-r border-gray-700 p-4 flex flex-col gap-2">
-      <h2 className="text-xl font-bold text-white px-4 py-2 mb-2">
-        🎮 Streamer Tools
-      </h2>
+    <aside 
+      className={`bg-gray-800 border-r border-gray-700 p-4 flex flex-col gap-2 transition-all duration-300 shrink-0 ${
+        sidebarCollapsed ? 'w-20' : 'w-64'
+      }`}
+    >
+      <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} px-2 mb-2`}>
+        {!sidebarCollapsed && (
+          <h2 className="text-xl font-bold text-white whitespace-nowrap">
+            🎮 Streamer Tools
+          </h2>
+        )}
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+          title={sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'}
+        >
+          <svg 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            className={`w-5 h-5 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`}
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+      </div>
       {categories.map((cat) => (
         <SidebarItem
           key={cat.id}
           icon={icons[cat.id]}
           label={cat.label}
           active={activeCategory === cat.id}
+          collapsed={sidebarCollapsed}
           onClick={() => setActiveCategory(cat.id)}
         />
       ))}

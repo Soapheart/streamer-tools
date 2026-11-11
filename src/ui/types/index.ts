@@ -5,7 +5,9 @@ export type AppCategory = 'music' | 'chat' | 'auction' | 'general' | 'about';
 export interface DashboardState {
     activeCategory: AppCategory;
     settings: AppSettings;
+    sidebarCollapsed: boolean;
     setActiveCategory: (category: AppCategory) => void;
+    toggleSidebar: () => void;
     updateSettings: <K extends keyof AppSettings> (
         category: K,
         updates: Partial<AppSettings[K]>
