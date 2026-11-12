@@ -68,4 +68,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
         startWithSystem: false,
         minimizeOnClose: false,
     },
+    twitch: {
+        clientId: '',
+        clientSecret: '',
+        broadcasterId: '',
+        broadcasterName: '',
+        token: undefined,
+    },
 };

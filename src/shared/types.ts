@@ -85,6 +85,7 @@ export interface AppSettings {
   chat: ChatWidgetConfig;
   auction: AuctionWidgetConfig;
   system: SystemSettings;
+  twitch: TwitchSettings;
 }
 
 export type StoreSchema = {
@@ -118,6 +119,20 @@ export interface ChatFilters {
   maxMessages: number;
 }
 
+
+export interface TwitchSettings {
+  clientId?: string;
+  clientSecret?: string;
+  broadcasterId?: string;
+  broadcasterName?: string;
+  token?: {
+    accessToken: string;
+    refreshToken: string | null;
+    scope: string[];
+    expiresIn: number | null;
+    obtainmentTimestamp: number;
+  };
+}
 
 // === Тип сообщения чата ===
 export interface ChatMessage {

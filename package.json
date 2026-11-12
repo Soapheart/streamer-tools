@@ -55,6 +55,9 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
+    "@twurple/api": "^8.2.0",
+    "@twurple/auth": "^8.2.0",
+    "@twurple/eventsub-ws": "^8.2.0",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",

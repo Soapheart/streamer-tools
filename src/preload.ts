@@ -29,5 +29,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   system: {
     getStartWithSystem: () => ipcRenderer.invoke('system:get-start-with-system'),
     setStartWithSystem: (enabled: boolean) => ipcRenderer.invoke('system:set-start-with-system', enabled),
-  }
+  },
+  twitch: {
+      auth: () => ipcRenderer.invoke('twitch:auth'),
+      createTestReward: () => ipcRenderer.invoke('twitch:create-test-reward'),
+      deleteReward: (rewardId: string) => ipcRenderer.invoke('twitch:delete-reward', rewardId),
+    },
 });

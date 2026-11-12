@@ -60,6 +60,28 @@ export const ChatSettings: React.FC = () => {
     handleFiltersUpdate(field, array);
   };
 
+  const handleTwitchAuth = async () => {
+  try {
+    const result = await window.electronAPI.twitch.auth();
+    if (result.success) {
+      console.log('✅ Twitch connected!');
+    } else {
+      console.error('❌ Auth failed:', result.error);
+    }
+  } catch (error) {
+    console.error('Auth error:', error);
+  }
+};
+
+const handleCreateReward = async () => {
+  const result = await window.electronAPI.twitch.createTestReward();
+  if (result.success) {
+    alert(`✅ Награда создана! ID: ${result.rewardId}`);
+  } else {
+    alert(`❌ Ошибка: ${result.error}`);
+  }
+};
+
   return (
     <div className="space-y-6">
       {/* Блок с описанием и ссылкой на виджет */}
@@ -111,9 +133,14 @@ export const ChatSettings: React.FC = () => {
                   placeholder="oauth:xxxxxxxxxxxxxxxx"
                   className="w-full bg-gray-800 text-white rounded-md px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500 transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">
+                {/* <p className="text-xs text-gray-500 mt-1.5">
                   Нужен для получения цветных никнеймов и значков ролей. Без токена виджет работает в анонимном режиме.
-                </p>
+                </p> */}
+                  <button onClick={handleTwitchAuth}>
+                    Подключить Twitch
+                  </button>
+                      <button onClick={handleCreateReward}>Создать тестовую награду</button>
+
               </div>
             </div>
           ))}

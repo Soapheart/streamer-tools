@@ -12,6 +12,11 @@ import { TwitchChatService } from "./adapters/sources/TwitchChatService";
 // import { AuctionWidgetAdapter } from './adapters/widgets/AuctionWidgetAdapter';
 import { startWidgetServer } from "./server";
 
+import { TwitchApiService } from "./core/services/twichApiService";
+import { getInitialToken } from "./core/utils/twitchAuth";
+import { StaticAuthProvider } from "@twurple/auth";
+import { ApiClient } from "@twurple/api";
+
 import { fileURLToPath } from "url";
 import { ChildProcess, spawn } from "child_process";
 import { ChatWidgetConfig } from "./shared/types";
@@ -73,6 +78,8 @@ function startMediaListener() {
   }
 }
 
+
+let twitchApiService: TwitchApiService | null = null;
 
 // === Реестр виджетов ===
 const musicAdapter = new MusicWidgetAdapter();
@@ -211,6 +218,86 @@ if (!gotTheLock) {
       console.error("Failed to load settings on startup:", error);
     }
 
+    // === ОБРАБОТЧИК РУЧНОЙ АВТОРИЗАЦИИ (КНОПКА В UI) ===
+  ipcMain.handle("twitch:auth", async () => {
+    try {
+      const clientId = "7jxb9p3vc4r9b5lt75s9lbhy1msuee".trim();
+      const clientSecret = "6t4gp6aucriwmdbppc0ftptwiuize3".trim(); // <-- ВСТАВЬТЕ СЮДА ВАШ СЕКРЕТ БЕЗ ПРОБЕЛОВ
+
+      console.log("🔐 Starting Twitch OAuth flow...");
+      
+      // 1. Получаем токен (redirectUri жестко зашит в twitchAuth.ts как 'http://localhost')
+      const token = await getInitialToken(
+        clientId,
+        clientSecret,
+        ["channel:manage:redemptions", "channel:read:redemptions"]
+      );
+
+      // 2. ПРЯМОЙ ЗАПРОС к Twitch API для получения данных текущего пользователя
+      console.log("🔍 Fetching current user data from Twitch API...");
+      const userResponse = await fetch("https://api.twitch.tv/helix/users", {
+        headers: {
+          "Client-Id": clientId,
+          "Authorization": `Bearer ${token.accessToken}`,
+        },
+      });
+      if (!userResponse.ok) {
+        throw new Error(`Failed to fetch user data: ${userResponse.statusText}`);
+      }
+      const userData = await userResponse.json();
+      const currentUser = userData.data[0];
+      const broadcasterId = currentUser.id;
+      const broadcasterName = currentUser.login;
+      console.log(`✅ Auth successful! User: ${broadcasterName} (ID: ${broadcasterId})`);
+
+      // 3. Инициализируем сервис
+      twitchApiService = new TwitchApiService();
+      await twitchApiService.initialize(
+        {
+          clientId,
+          clientSecret,
+          redirectUri: "http://localhost",
+          broadcasterId,
+        },
+        token
+      );
+
+      await twitchApiService.startEventSub();
+
+      // 4. Слушаем события
+      twitchApiService.on("redemption", (redemption) => {
+        console.log("🎁 Received redemption event:", redemption.userDisplayName, redemption.rewardTitle);
+      });
+
+      // 5. Сохраняем всё в хранилище (объединяем с текущими настройками, чтобы не затереть остальное)
+      const currentSettings = storage.getSettings() || {};
+
+      const twitchSettingsToSave = {
+        clientId,
+        clientSecret,
+        broadcasterId,
+        broadcasterName,
+        token: {
+          accessToken: token.accessToken,
+          refreshToken: token.refreshToken ?? null,
+          scope: token.scope,
+          expiresIn: token.expiresIn ?? null,
+          obtainmentTimestamp: token.obtainmentTimestamp,
+        }
+      };
+
+      await storage.saveSettings({
+        ...currentSettings,
+        twitch: twitchSettingsToSave,
+      });
+
+      return { success: true, broadcasterName, broadcasterId };
+    } catch (error: any) {
+      console.error("❌ Twitch authentication failed:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
     // === Обработчик открытия внешних ссылок ===
     ipcMain.handle("open-external", async (_event, url: string) => {
       // Разрешаем https и локальные адреса для разработки
@@ -262,6 +349,35 @@ ipcMain.handle(
     return await isStartWithSystemEnabled();
   },
 );
+
+ipcMain.handle("twitch:create-test-reward", async () => {
+  try {
+    if (!twitchApiService) {
+      throw new Error("Twitch API service not initialized. Please login first.");
+    }
+    
+    const reward = await twitchApiService.createRaffleReward("Тестовая награда", 100);
+    console.log("✅ Reward created with ID:", reward.id);
+    return { success: true, rewardId: reward.id };
+  } catch (error: any) {
+    console.error("❌ Failed to create reward:", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// === Удаление тестовой награды ===
+ipcMain.handle("twitch:delete-reward", async (_event, rewardId: string) => {
+  try {
+    if (!twitchApiService) {
+      throw new Error("Twitch API service not initialized.");
+    }
+    await twitchApiService.deleteReward(rewardId);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Failed to delete reward:", error);
+    return { success: false, error: error.message };
+  }
+});
 
 ipcMain.on("widget:settings:update", (_event, { widget, settings }) => {
   console.log("Received widget settings update:", { widget, settings });
