@@ -221,8 +221,8 @@ if (!gotTheLock) {
     // === ОБРАБОТЧИК РУЧНОЙ АВТОРИЗАЦИИ (КНОПКА В UI) ===
   ipcMain.handle("twitch:auth", async () => {
     try {
-      const clientId = "7jxb9p3vc4r9b5lt75s9lbhy1msuee".trim();
-      const clientSecret = "6t4gp6aucriwmdbppc0ftptwiuize3".trim(); // <-- ВСТАВЬТЕ СЮДА ВАШ СЕКРЕТ БЕЗ ПРОБЕЛОВ
+      const clientId = "".trim();
+      const clientSecret = "".trim(); 
 
       console.log("🔐 Starting Twitch OAuth flow...");
       
