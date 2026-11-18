@@ -1,4 +1,3 @@
-import { Badges } from "tmi.js";
 import { THEME_PRESETS } from "./themes";
 
 // === Типы сообщений для WebSocket ===
@@ -134,10 +133,34 @@ export interface TwitchSettings {
   };
 }
 
+// Ключи бейджей, которые встречаются в Twitch-чате
+export type BadgeKey = 
+  | 'broadcaster'
+  | 'moderator'
+  | 'vip'
+  | 'subscriber'
+  | 'premium'
+  | 'bits'
+  | 'bits-leader'
+  | 'founder'
+  | 'staff'
+  | 'admin'
+  | 'partner'
+  | 'turbo'
+  | 'sub-gifter'
+  | 'sub-gift-leader'
+  | 'hype-train'
+  | string; // fallback для кастомных бейджей (например, hunt-white)
+
+// Карта бейджей: имя бейджа -> версия (строка, обычно "0" или "1")
+export type Badges = Record<string, string>;
+
 // === Тип сообщения чата ===
 export interface ChatMessage {
   id: string;
+  channel?: string;
   username: string;
+  displayName: string;
   color: string;
   text: string;
   badges: Badges;

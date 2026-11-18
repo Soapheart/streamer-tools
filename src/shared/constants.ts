@@ -76,3 +76,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
         token: undefined,
     },
 };
+
+
+export const TWITCH_CLIENT_ID = 'zth1mmdhaho3xua7ua6wlie3bl4sk2';
+export const TWITCH_SCOPES = [
+  'chat:read',                      // чтение чата (IRC-вариант)
+  'user:read:chat',                 // чтение чата через EventSub
+  'channel:read:redemptions',       // слушать активации наград
+  'channel:manage:redemptions',     // создавать/удалять награды
+  'channel:read:subscriptions',     // на будущее: саб-бонусы в лотерее
+  'moderator:read:followers',       // на будущее
+  // 'chat:edit' / 'user:write:chat' // чат-бот
+];
+export const TWURPLE_INTENTS = ['chat', 'channel'];

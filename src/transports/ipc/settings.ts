@@ -30,4 +30,5 @@ export function registerSettingsHandlers(
       return { success: false, error };
     }
   });
+
 }

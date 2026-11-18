@@ -1,11 +1,11 @@
-import { AccessToken, RefreshingAuthProvider } from '@twurple/auth';
+import { AccessToken, RefreshingAuthProvider, AuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 import { EventSubWsListener } from '@twurple/eventsub-ws';
 import { EventEmitter } from 'events';
+import { TWITCH_SCOPES, TWURPLE_INTENTS } from '../../shared/constants';
 
 export interface TwitchConfig{
     clientId: string;
-    clientSecret: string;
     redirectUri: string;
     broadcasterId: string;
 }
@@ -20,33 +20,37 @@ export class TwitchApiService extends EventEmitter {
         super();
     }
 
-    async initialize(config:TwitchConfig, accessToken: AccessToken){
+ async initialize(config: TwitchConfig, accessToken: AccessToken) {
         this.config = config;
+        
+        console.log('[TwitchApi] === INITIALIZE START ===');
+        console.log('[TwitchApi] Token scopes:', accessToken.scope);
+        console.log('[TwitchApi] Token has refresh:', !!accessToken.refreshToken);
+        console.log('[TwitchApi] Broadcaster ID:', config.broadcasterId);
 
-        this.authProvider = new RefreshingAuthProvider(
-            {
-                clientId: config.clientId,
-                clientSecret: config.clientSecret,
-            }
-        );
+        this.authProvider = new RefreshingAuthProvider({
+            clientId: config.clientId,
+        });
 
-        await this.authProvider.addUserForToken(accessToken, ['chat', 'channel']);
+        console.log('[TwitchApi] Calling addUserForToken with intents:', TWURPLE_INTENTS);
+        const userId = await this.authProvider.addUserForToken(accessToken, TWURPLE_INTENTS);
+        console.log('[TwitchApi] ✅ addUserForToken SUCCESS, userId:', userId);
 
         this.apiClient = new ApiClient({
             authProvider: this.authProvider,
-        })
+        });
 
         this.eventSubListener = new EventSubWsListener({
             apiClient: this.apiClient,
         });
-        console.log('✅ Twitch API initialized');
-    } 
+        console.log('[TwitchApi] === INITIALIZE SUCCESS ===');
+    }
     
     async startEventSub(){
         if(!this.eventSubListener || !this.config){
             throw new Error('TwitchApiService not initialized');
         }
-        this.eventSubListener.start();
+        await this.eventSubListener.start();
         console.log('🎧 EventSub WebSocket listener started');
 
         this.eventSubListener.onChannelRedemptionAdd(this.config.broadcasterId, (redemption) => {
@@ -62,7 +66,7 @@ export class TwitchApiService extends EventEmitter {
 
     async stopEventSub(){
         if(this.eventSubListener){
-            this.eventSubListener.stop();
+            await this.eventSubListener.stop();
             console.log('🛑 EventSub listener stopped');
         }
     }
@@ -111,5 +115,9 @@ async createRaffleReward(prize: string, cost: number) {
             [redemptionId],
             'CANCELED'
         );
+    }
+
+    getAuthProvider(): AuthProvider | null {
+        return this.authProvider;
     }
 }

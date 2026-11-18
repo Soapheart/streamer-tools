@@ -1,5 +1,5 @@
 // public/widgets/chat/chatWidget.js
-import { parseTwitchEmotes } from "./emoteParser.js"; // Убедитесь, что расширение .js указано (требование ES modules)
+import { parseTwitchEmotes } from "./emoteParser.js";
 
 const RECONNECT_DELAY = 2000;
 const MAX_MESSAGES = 50;
@@ -73,8 +73,6 @@ function renderMessage(msg) {
   const container = document.getElementById("chat-container");
   if (!container) return;
 
-  // 🔍 ОТЛАДКА: Посмотрите в консоль браузера! 
-  // Если msg.emotes равно undefined, проблема в TwitchChatService.ts (Шаг 1)
   console.log("[ChatWidget] Получено сообщение:", msg);
 
   const el = document.createElement("div");

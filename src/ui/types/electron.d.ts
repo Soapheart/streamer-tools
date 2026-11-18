@@ -14,6 +14,16 @@ export interface ElectronAPI {
     getStartWithSystem: () => Promise<boolean>;
     setStartWithSystem: (enabled: boolean) => Promise<boolean>;
   };
+  twitch: {
+    auth: () => Promise<{success:boolean; broadcasterName?: string; broadcasterId?: string; error?:string}>;
+    logout: () => Promise<{success:boolean; error?:string}>;
+    getStatus: () => Promise<{connected: boolean; broadcasterName: string | null;}>;
+    getChatStatus: () => Promise<{
+      isConnected: boolean;
+      channel: string | null;
+      isAuthorized: boolean;
+    }>;
+  }
 }
 
 declare global {

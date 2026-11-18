@@ -24,7 +24,7 @@ export function parseTwitchEmotes (text, emotes){
     lastIndex = occ.end + 1;
   }
   if( lastIndex < text.length){
-    chunks.push({type: text, content: text.slice(lastIndex)})
+    chunks.push({type: 'text', content: text.slice(lastIndex)})
   }
 
   return chunks;

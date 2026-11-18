@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { ExternalLinkButton } from '../ExternalLinkButton';
 import { ChatWidgetConfig, ChatSource } from '../../../shared/types';
@@ -12,6 +12,29 @@ export const ChatSettings: React.FC = () => {
   const { settings, updateSettings } = useDashboardStore();
   const chatSettings = settings.chat as ChatWidgetConfig;
   const [activeTab, setActiveTab] = useState<ChatTab>('connection');
+
+  const [chatStatus, setChatStatus] = useState<{
+    isConnected: boolean;
+    channel: string | null;
+    isAuthorized: boolean;
+  }>({ isConnected: false, channel: null, isAuthorized: false });
+
+  const currentChannel = chatSettings.sources?.twitch?.[0]?.channel || "";
+  // Опрос статуса при монтировании и при изменении канала
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const status = await window.electronAPI.twitch.getChatStatus();
+      setChatStatus(status);
+    };
+    
+    fetchStatus();
+    // Обновляем раз в 2 секунды, чтобы ловить переподключения
+    const interval = setInterval(fetchStatus, 2000);
+    return () => clearInterval(interval);
+  }, [currentChannel]); // Перезапрашиваем при смене канала
+
+
+
 
   // Локальные состояния для текстовых полей (чтобы курсор не прыгал при вводе)
   const [stopWordsRaw, setStopWordsRaw] = useState(chatSettings.filters.stopWords.join(', '));
@@ -63,9 +86,7 @@ export const ChatSettings: React.FC = () => {
   const handleTwitchAuth = async () => {
   try {
     const result = await window.electronAPI.twitch.auth();
-    if (result.success) {
-      console.log('✅ Twitch connected!');
-    } else {
+    if (!result.success) {
       console.error('❌ Auth failed:', result.error);
     }
   } catch (error) {
@@ -73,22 +94,27 @@ export const ChatSettings: React.FC = () => {
   }
 };
 
-const handleCreateReward = async () => {
-  const result = await window.electronAPI.twitch.createTestReward();
-  if (result.success) {
-    alert(`✅ Награда создана! ID: ${result.rewardId}`);
-  } else {
-    alert(`❌ Ошибка: ${result.error}`);
+const handleTwitchLogout = async () => {
+  if(!confirm('Отключить Twitch API? Это остановит работу наград и лотерей.')) return;
+  try {
+    const result = await window.electronAPI.twitch.logout();
+    if(!result.success){
+      alert(`Ошибка отключения: ${result.error}`);
+    }
+  }catch (e){
+    console.error('Logout error:', e);
   }
-};
+}
 
-  return (
+const twitchApiStatus = settings.twitch;
+const isConnected = !!twitchApiStatus?.token && !!twitchApiStatus?.broadcasterName;
+const connectedUserName = twitchApiStatus?.broadcasterName || '';
+
+ return (
     <div className="space-y-6">
       {/* Блок с описанием и ссылкой на виджет */}
       <div className="text-gray-300">
-        <p>
-          Для работы виджета добавьте источник «Браузер» в OBS и вставьте ссылку ниже.
-        </p>
+        <p>Для работы виджета добавьте источник «Браузер» в OBS и вставьте ссылку ниже.</p>
         <div className="my-4 flex flex-wrap gap-3">
           <ExternalLinkButton
             url={WIDGET_URLS?.chat || 'http://127.0.0.1:3000/widgets/chat/index.html'}
@@ -109,38 +135,109 @@ const handleCreateReward = async () => {
           {(Array.isArray(chatSettings.sources?.twitch) ? chatSettings.sources.twitch : []).map((source, index) => (
             <div key={source.id} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600/50">
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                {/* Динамический индикатор*/}
+                <span 
+                  className={`w-2 h-2 rounded-full ${
+                    chatStatus.isConnected 
+                      ? 'bg-green-400 animate-pulse' 
+                      : source.channel.trim() 
+                        ? 'bg-yellow-400 animate-pulse' // жёлтый = пытается подключиться
+                        : 'bg-gray-500'                 // серый = канал не указан
+                  }`} 
+                  title={
+                    chatStatus.isConnected 
+                      ? `Подключено к ${chatStatus.channel}${chatStatus.isAuthorized ? ' (авторизован)' : ' (анонимно)'}`
+                      : source.channel.trim()
+                        ? 'Подключение...'
+                        : 'Канал не указан'
+                  }
+                />
                 <label className="text-gray-200 font-semibold">Twitch канал #{index + 1}</label>
               </div>
               
               <div className="mb-4">
-                <label className="text-gray-300 block mb-1.5 text-sm font-medium">Название канала (без #)</label>
-                <input
-                  type="text"
-                  value={source.channel}
-                  onChange={(e) => handleSourceUpdate(index, 'channel', e.target.value)}
-                  placeholder="например: soapheart"
-                  className="w-full bg-gray-800 text-white rounded-md px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500 transition-all"
-                />
+                {isConnected ? (
+                      // Режим API: показываем привязанный канал
+                      <div className="bg-purple-900/20 border border-purple-500/30 rounded-md p-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-400">🔐</span>
+                          <div className="flex-1">
+                            <p className="text-gray-200 font-medium text-sm">
+                              Канал: <span className="text-purple-300">{source.channel}</span>
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              Привязан к аккаунту <span className="text-purple-300">{connectedUserName}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Отключите API, чтобы вручную указать другой канал для анонимного чтения.
+                        </p>
+                      </div>
+                    ) : (
+                      // Режим без API: обычный инпут
+                      <div>
+                        <label className="text-gray-300 block mb-1.5 text-sm font-medium">
+                          Название канала
+                        </label>
+                        <input
+                          type="text"
+                          value={source.channel}
+                          onChange={(e) => handleSourceUpdate(index, 'channel', e.target.value)}
+                          placeholder="например: soapheart"
+                          className="w-full bg-gray-800 text-white rounded-md px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500 transition-all"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5">
+                          👤 Чат работает в анонимном режиме. Подключите API для наград и лотерей.
+                        </p>
+                      </div>
+                    )}
               </div>
 
-              <div>
-                <label className="text-gray-300 block mb-1.5 text-sm font-medium">OAuth Токен (необязательно)</label>
-                <input
-                  type="password"
-                  value={source.token}
-                  onChange={(e) => handleSourceUpdate(index, 'token', e.target.value)}
-                  placeholder="oauth:xxxxxxxxxxxxxxxx"
-                  className="w-full bg-gray-800 text-white rounded-md px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-500 transition-all"
-                />
-                {/* <p className="text-xs text-gray-500 mt-1.5">
-                  Нужен для получения цветных никнеймов и значков ролей. Без токена виджет работает в анонимном режиме.
-                </p> */}
-                  <button onClick={handleTwitchAuth}>
-                    Подключить Twitch
-                  </button>
-                      <button onClick={handleCreateReward}>Создать тестовую награду</button>
+              {/* 🔥 Блок статуса Twitch API */}
+              <div className="pt-3 border-t border-gray-600/50">
+                <label className="text-gray-300 block mb-2 text-sm font-medium">
+                  Twitch API (награды, лотереи)
+                </label>
 
+                {isConnected ? (
+                  <div className="flex items-center justify-between bg-green-900/20 border border-green-700/30 rounded-lg p-3">
+                    <div>
+                      <p className="text-green-300 text-sm font-medium">
+                        ✅ Подключено: <span className="font-bold">{connectedUserName}</span>
+                      </p>
+                      <p className="text-green-400/70 text-xs mt-0.5">
+                        Управление наградами и лотереями активно
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleTwitchLogout}
+                      className="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded-md transition-colors"
+                    >
+                      Отключить
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleTwitchAuth}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    <span>🔐</span> Подключить Twitch API
+                  </button>
+                )}
+
+                {/* 🔥 Предупреждение, если каналы не совпадают */}
+                {isConnected && source.channel && source.channel.toLowerCase() !== connectedUserName.toLowerCase() && (
+                  <div className="mt-3 bg-yellow-900/20 border border-yellow-700/30 rounded-md p-2.5">
+                    <p className="text-yellow-300 text-xs flex items-start gap-2">
+                      <span>⚠️</span>
+                      <span>
+                        Вы авторизованы как <b>{connectedUserName}</b>, но читаете канал <b>{source.channel}</b>. 
+                        Управление наградами и лотереями работает <b>только</b> для вашего подключенного канала.
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))}

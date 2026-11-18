@@ -32,7 +32,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   twitch: {
       auth: () => ipcRenderer.invoke('twitch:auth'),
+      logout: ()=> ipcRenderer.invoke('twitch:logout'),
+      getStatus: () => ipcRenderer.invoke('twitch:get-status'),
       createTestReward: () => ipcRenderer.invoke('twitch:create-test-reward'),
       deleteReward: (rewardId: string) => ipcRenderer.invoke('twitch:delete-reward', rewardId),
+      getChatStatus: () => ipcRenderer.invoke('twitch:get-chat-status'),
     },
 });
