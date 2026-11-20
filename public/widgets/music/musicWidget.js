@@ -3,9 +3,10 @@ const RECONNECT_DELAY = 2000;
 let ws = null;
 let lastText = "";
 let reconnectTimer = null;
+let hideTimer = null;
+let currentSettings = {};
 
 const root = document.documentElement;
-
 const widgetEl = document.getElementById("widget");
 
 function connect() {
@@ -45,7 +46,7 @@ function handleMessage(data) {
   if (data.type === "PONG") return;
   
   if (data.type === "SETTINGS_UPDATE" && data.payload) {
-    // console.log("⚙️ Received settings update:", data.payload);
+    currentSettings = data.payload;
     applySettings(data.payload);
     return;
   }
@@ -58,20 +59,25 @@ function handleMessage(data) {
       return;
     }
 
-    const fullText = `${track.artist} — ${track.title}`;
+    if (currentSettings.hideOnPause) {
+      if (track.playState === "paused" || track.playState === "stopped") {
+        scheduleHide();
+      } else if (track.playState === "playing") {
+        showWidget();
+      }
+    }
+
+    const fullText = `${track.artist} - ${track.title}`;
     const isSameText = fullText === lastText;
 
-    // ✅ ИСПРАВЛЕНИЕ: Если текст совпадает, всё равно проверяем обложку и цвет
     if (isSameText) {
       console.log("🔄 Same track text, checking for delayed cover/background...");
       
-      // Обновляем обложку, если она пришла
-      if (track.cover !== undefined) {
-        console.log("🖼️ Updating cover for existing track");
-        updateCover(track.cover);
-      }
+      // if (track.cover !== undefined) {
+      //   console.log("🖼️ Updating cover for existing track");
+      //   updateCover(track.cover);
+      // }
       
-      // Обновляем цвет фона, если он изменился
       if (track.background_color) {
         const currentColor = widgetEl.style.getPropertyValue("--widget-bg-color").trim();
         if (track.background_color !== currentColor) {
@@ -79,22 +85,32 @@ function handleMessage(data) {
           widgetEl.style.setProperty("--widget-bg-color", track.background_color);
         }
       }
-      
-      return; // Текст актуален, дальше не идем
+      return; 
     }
 
-    // Полное обновление при смене трека
+
     lastText = fullText;
     console.log("🎵 NEW TRACK:", track.title, "by", track.artist);
 
-    updateCover(track.cover);
+    const animationDuration = getAnimationDuration();
+    const animated = applyTrackChangeAnimation();
+
+    if(animated){
+      setTimeout(() => {
+        updateTrackData(track);
+      }, animationDuration)
+    }else{
+      updateTrackData(track);
+    }
+
+    // updateCover(track.cover);
 
     if(track.background_color) {
-      console.log("🎨 Updating widget background color to:", track.background_color);
+      // console.log("🎨 Updating widget background color to:", track.background_color);
       widgetEl.style.setProperty("--widget-bg-color", track.background_color);
     }
 
-    updateText(track.artist, track.title);
+    // updateText(track.artist, track.title);
 
     if (track.playState) {
       console.log("▶️ Play state:", track.playState);
@@ -102,15 +118,73 @@ function handleMessage(data) {
   }
 }
 
+function updateTrackData(track) {
+  updateCover(track.cover);
+  updateText(track.artist, track.title);
+  
+  if (track.background_color) {
+    widgetEl.style.setProperty("--widget-bg-color", track.background_color);
+  }
+}
+
+function scheduleHide() {
+  if (hideTimer) clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    widgetEl.classList.add('is-hidden');
+    console.log("🙈 Widget hidden (paused)");
+  }, 5000); // 5 секунд
+}
+
+function showWidget() {
+  if (hideTimer) {
+    clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+  widgetEl.classList.remove('is-hidden');
+  console.log("👁️ Widget shown (playing)");
+}
+
+function getAnimationDuration() {
+  const duration = getComputedStyle(widgetEl).getPropertyValue('--animation-duration').trim();
+  
+  if (duration.endsWith('ms')) {
+    return parseFloat(duration);
+  } else if (duration.endsWith('s')) {
+    return parseFloat(duration) * 1000;
+  }
+  
+  return 400; // Fallback
+}
+
+function applyTrackChangeAnimation() {
+  const animation = currentSettings.trackChangeAnimation || 'none';
+  if (animation === 'none') return false;
+  
+  const duration = getAnimationDuration();
+  
+  widgetEl.classList.add(`exit-${animation}`);
+  
+  setTimeout(() => {
+    widgetEl.classList.remove(`exit-${animation}`);
+    widgetEl.classList.add(`enter-${animation}`);
+    
+    setTimeout(() => {
+      widgetEl.classList.remove(`enter-${animation}`);
+    }, duration);
+  }, duration);
+  
+  return true;
+}
+
+
+
 function applySettings(settings) {
   console.log("Applying settings in widget:", settings);
-  // console.log("Received settings:", settings.font);
 
   const { colors, font, effects } = settings.theme;
 
   console.log("🎨 Applying theme:", settings.theme);
 
-  // Применяем цвета из темы
   if (colors) {
     if(colors.background) {
       root.style.setProperty("--widget-bg-color", colors.background);
@@ -118,32 +192,26 @@ function applySettings(settings) {
     if (colors.text) {
       root.style.setProperty("--text-color", colors.text);
     }
-
     if (colors.textSecondary) {
       root.style.setProperty("--text-secondary-color", colors.textSecondary);
     }
-
     if (colors.accent) {
       root.style.setProperty("--accent-color", colors.accent);
     }
   }
 
-  // Применяем шрифты
   if (font) {
     if (font.family) {
       root.style.setProperty("--font-family", font.family);
     }
-
     if (font.weight) {
       root.style.setProperty("--font-weight", font.weight);
     }
-
     if(font.size) {
       root.style.setProperty("--font-size", `${font.size}px`);
     }
   }
 
-  // Применяем эффекты
   if (effects) {
     if (effects.borderRadius !== undefined) {
       root.style.setProperty("--border-radius", `${effects.borderRadius}px`);
@@ -153,13 +221,51 @@ function applySettings(settings) {
     }
   }
 
-  // Применяем остальные настройки (не часть темы)
+  if (!settings.hideOnPause) {
+      widgetEl.classList.remove('is-hidden');
+  }
+
+  // Показывать обложку
   if (settings.showCover !== undefined) {
     const coverEl = document.getElementById("cover");
     if (coverEl) {
       coverEl.style.display = settings.showCover ? "block" : "none";
     }
   }
+
+  // 🆕 Бегущая строка
+  if (settings.marqueeEnabled !== undefined) {
+    updateMarqueeState();
+  }
+}
+
+// 🆕 Обновление состояния marquee
+function updateMarqueeState() {
+  const titleEl = document.querySelector(".title");
+  const artistEl = document.querySelector(".artist");
+  
+  // 🔥 Безопасное чтение настройки с fallback (по умолчанию true, если не задано)
+  const isMarqueeEnabled = currentSettings.marqueeEnabled ?? true;
+
+  function checkAndApply(el) {
+    if (!el) return;
+
+    el.classList.remove('marquee');
+
+    void el.offsetWidth;
+
+    const needsMarquee = isMarqueeEnabled && el.scrollWidth > el.clientWidth;
+    if(needsMarquee){
+      el.style.maxWidth = 'none';
+      const realWidth = el.scrollWidth;
+      el.style.setProperty('--marquee-width', `${realWidth}px`);
+      el.style.maxWidth = '';
+      el.classList.add('marquee');
+    }
+
+  }
+  checkAndApply(titleEl);
+  checkAndApply(artistEl);
 }
 
 function updateCover(coverUrl) {
@@ -167,17 +273,15 @@ function updateCover(coverUrl) {
   const coverEl = document.getElementById("cover");
   if (!coverEl) return;
 
-  // ✅ ИСПРАВЛЕНИЕ: Принудительный сброс перед установкой новой обложки
-  coverEl.style.opacity = "0"; // Скрываем старую
+  coverEl.style.opacity = "0";
   
   if(coverUrl) {
-    // Создаем временное изображение для проверки загрузки
     const tempImg = new Image();
     
     tempImg.onload = () => {
       console.log("✅ Cover loaded successfully");
       coverEl.src = coverUrl;
-      coverEl.style.opacity = "1"; // Показываем новую
+      coverEl.style.opacity = "1";
     };
     
     tempImg.onerror = () => {
@@ -198,6 +302,13 @@ function updateText(artist, title) {
   const artistEl = document.querySelector(".artist");
   if (titleEl) titleEl.textContent = title;
   if (artistEl) artistEl.textContent = artist;
+  
+  // 🆕 Обновляем marquee после изменения текста
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      updateMarqueeState();
+    });
+  });
 }
 
 function sendPing() {
@@ -213,5 +324,6 @@ setInterval(sendPing, 20000);
 window.addEventListener("beforeunload", () => {
   console.log('Cleaning up...');
   if(reconnectTimer) clearTimeout(reconnectTimer);
+  if(hideTimer) clearTimeout(hideTimer);
   if (ws) ws.close();
 });

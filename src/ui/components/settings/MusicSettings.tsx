@@ -195,6 +195,49 @@ export const MusicSettings: React.FC = () => {
           Показывать обложку (если доступна)
         </label>
       </div>
+      
+      {/* Скрывать при паузе */}
+      <div className="flex items-center justify-start space-x-3">
+        <input
+          type="checkbox"
+          id="hideOnPause"
+          checked={musicSettings.hideOnPause}
+          onChange={(e) => updateSettings('music', { hideOnPause: e.target.checked })}
+          className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500"
+        />
+        <label htmlFor="hideOnPause" className="text-gray-200 cursor-pointer">
+          Скрывать виджет при паузе (через 5 секунд)
+        </label>
+      </div>
+
+      {/* Бегущая строка */}
+      <div className="flex items-center justify-start space-x-3">
+        <input
+          type="checkbox"
+          id="marqueeEnabled"
+          checked={musicSettings.marqueeEnabled}
+          onChange={(e) => updateSettings('music', { marqueeEnabled: e.target.checked })}
+          className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500"
+        />
+        <label htmlFor="marqueeEnabled" className="text-gray-200 cursor-pointer">
+          Бегущая строка для длинных названий
+        </label>
+      </div>
+
+      {/* Анимация смены трека */}
+      <div>
+        <label className="text-gray-200 block mb-2 font-medium">Анимация смены трека</label>
+        <select
+          value={musicSettings.trackChangeAnimation}
+          onChange={(e) => updateSettings('music', { trackChangeAnimation: e.target.value as any })}
+          className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        >
+          <option value="none">Без анимации</option>
+          <option value="fade">Плавное появление (Fade)</option>
+          <option value="slide">Выезд сбоку (Slide)</option>
+          <option value="scale">Увеличение (Scale)</option>
+        </select>
+      </div>
 
       {/* Тема оформления */}
       <div>

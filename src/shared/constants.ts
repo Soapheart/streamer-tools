@@ -26,6 +26,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
         },
         captureMethod: 'auto',
         allowVideoContent: false,
+        hideOnPause: false,
+        marqueeEnabled: false,
+        trackChangeAnimation: 'fade',
     },
     chat: { 
         enabled: true,

@@ -9,6 +9,7 @@
   --font-size: 16px;
   --border-radius: 12px;
   --shadow: 0 4px 12px rgba(0,0,0,0.3);
+  --animation-duration: 300ms;
 }
 
 #widget {
@@ -22,17 +23,42 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--animation-duration) ease,
+              transform var(--animation-duration) ease;
+}
+#widget.is-hidden {
+  opacity: 0;
+  pointer-events: none; /* Чтобы нельзя было кликнуть на невидимый виджет */
+  transform: translateY(10px); /* Легкий сдвиг вниз при исчезновении для красоты */
 }
 
+.text-wrapper {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .title {
   color: var(--text-color);
   font-size: var(--font-size);
   font-weight: var(--font-weight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .artist {
   color: var(--text-secondary-color);
   font-size: calc(var(--font-size) - 4px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 #cover {
@@ -40,4 +66,124 @@
   height: 64px;
   border-radius: 8px;
   object-fit: cover;
+}
+
+
+.exit-fade, .enter-fade,
+.exit-slide-up, .enter-slide-up,
+.exit-slide-right, .enter-slide-right,
+.exit-pop, .enter-pop,
+.exit-flip, .enter-flip {
+  transition: none !important;
+}
+
+/* === Бегущая строка === */
+.marquee {
+  text-overflow: clip;
+  overflow: visible;
+  display: inline-block;
+  animation: marquee 10s linear infinite;
+  max-width: none;
+}
+
+.marquee::after {
+  content: "";
+  display: inline-block;
+  width: 50px;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(calc(var(--marquee-width, 0px) * -1 - 50px));
+  }
+}
+/* === FADE === */
+.exit-fade {
+  animation: fadeOut var(--animation-duration) ease forwards;
+}
+.enter-fade {
+  animation: fadeIn var(--animation-duration) ease forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === SLIDE UP === */
+.exit-slide-up {
+  animation: slideUpOut var(--animation-duration) ease forwards;
+}
+.enter-slide-up {
+  animation: slideUpIn var(--animation-duration) ease forwards;
+}
+
+@keyframes slideUpOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === SLIDE RIGHT === */
+.exit-slide-right {
+  animation: slideRightOut var(--animation-duration) ease forwards;
+}
+.enter-slide-right {
+  animation: slideRightIn var(--animation-duration) ease forwards;
+}
+
+@keyframes slideRightOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+@keyframes slideRightIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* === POP === */
+.exit-pop {
+  animation: popOut var(--animation-duration) ease forwards;
+}
+.enter-pop {
+  animation: popIn var(--animation-duration) ease forwards;
+}
+
+@keyframes popOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.8); }
+}
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* === FLIP (3D) === */
+.exit-flip {
+  animation: flipOut var(--animation-duration) ease forwards;
+  transform-style: preserve-3d;
+}
+.enter-flip {
+  animation: flipIn var(--animation-duration) ease forwards;
+  transform-style: preserve-3d;
+}
+
+@keyframes flipOut {
+  from { transform: rotateY(0); opacity: 1; }
+  to { transform: rotateY(90deg); opacity: 0; }
+}
+@keyframes flipIn {
+  from { transform: rotateY(-90deg); opacity: 0; }
+  to { transform: rotateY(0); opacity: 1; }
 }

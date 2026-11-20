@@ -53,9 +53,11 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
     yandexMusic: boolean;
     vkMusic: boolean;
   };
-  playState?: "playing" | "paused";
   captureMethod: MusicCaptureMethod;
   allowVideoContent: boolean;
+  hideOnPause: boolean;
+  marqueeEnabled: boolean;
+  trackChangeAnimation: 'none' | 'fade' | 'slide' | 'scale';
 }
 
 export interface MusicTrack {
@@ -66,6 +68,7 @@ export interface MusicTrack {
     source: 'extension' | 'winrt' | 'mpris'
     platform?: 'vkMusic' | 'yandexMusic' | 'spotify' | 'yandex-desktop' | 'browser' | 'unknown';
     contentType?: 'music' | 'video' | 'unknown';
+    playState?: "playing" | "paused" | "stopped";
 }
 
 // === Настройки аукциона ===

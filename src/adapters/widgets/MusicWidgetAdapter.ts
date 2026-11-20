@@ -40,7 +40,7 @@ export class MusicWidgetAdapter implements WidgetAdapter {
     // Подмена фона для динамической темы на основе обложки трека
     if (themeId === 'dynamic' && this.lastTrack?.cover) {
       const palette = await this.ColorExtractorService.extract(this.lastTrack.cover);
-      console.log('🎨 Extracted color palette for dynamic theme:', palette);
+      // console.log('🎨 Extracted color palette for dynamic theme:', palette);
       if(palette.darkVibrant){
         resolvedPreset.colors.background = palette.darkVibrant;
       }else if(palette.dominant){
@@ -197,9 +197,19 @@ export class MusicWidgetAdapter implements WidgetAdapter {
   // ─────────────────────────────────────────────────────────
 
   private async handleIncomingTrack(track: MusicTrack): Promise<void> {
+    console.log('📥 [MusicAdapter] Received track payload:', {
+      title: track.title,
+      artist: track.artist,
+      playState: track.playState,
+      source: track.source,
+      allKeys: Object.keys(track)
+    });
+
     const source = track.source;
     const platform = track.platform;
     const contentType = track.contentType || 'music';
+
+    console.log(`Content type: ${contentType}`);
 
     this.lastTrack = track; // Кэшируем последний трек для новых клиентов
 
