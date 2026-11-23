@@ -81,7 +81,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   
   _loadFromStorage: async () => {
     try {
-      const saved = await window.electronAPI.settings.get();
+      let saved = await window.electronAPI.settings.get();
       
       // 🔄 Миграция: если twitch — не массив, преобразуем из старой объектной структуры
       if (saved?.chat?.sources?.twitch && !Array.isArray(saved.chat.sources.twitch)) {

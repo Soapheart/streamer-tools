@@ -1,5 +1,7 @@
 const RECONNECT_DELAY = 2000;
 
+const loadedAnimations = new Set();
+
 let ws = null;
 let lastText = "";
 let reconnectTimer = null;
@@ -42,7 +44,7 @@ function connect() {
   };
 }
 
-function handleMessage(data) {
+async function handleMessage(data) {
   if (data.type === "PONG") return;
   
   if (data.type === "SETTINGS_UPDATE" && data.payload) {
@@ -93,7 +95,7 @@ function handleMessage(data) {
     console.log("🎵 NEW TRACK:", track.title, "by", track.artist);
 
     const animationDuration = getAnimationDuration();
-    const animated = applyTrackChangeAnimation();
+    const animated = await applyTrackChangeAnimation();
 
     if(animated){
       setTimeout(() => {
@@ -115,6 +117,66 @@ function handleMessage(data) {
     if (track.playState) {
       console.log("▶️ Play state:", track.playState);
     }
+  }
+}
+
+async function loadAnimationCSS(animationId) {
+  if (!animationId || animationId === 'none' || animationId === 'undefined') {
+    console.log('[Animation] No valid animation requested.');
+    return false;
+  }
+  
+  if (loadedAnimations.has(animationId)) {
+    console.log(`[Animation] "${animationId}" already loaded.`);
+    return true;
+  }
+
+  try {
+    console.log(`[Animation] Fetching available animations from server...`);
+    const response = await fetch('http://127.0.0.1:3000/api/content/music?contentType=animations');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('[Animation] Server responded with packs:', data.packs);
+
+    let targetItem = null;
+    for (const pack of data.packs) {
+      const item = pack.items.find(i => i.id === animationId);
+      if (item) {
+        targetItem = { ...item, packId: pack.id };
+        break;
+      }
+    }
+
+    if (!targetItem) {
+      console.warn(`⚠️ Animation "${animationId}" not found in any loaded pack.`);
+      return false;
+    }
+
+    const cssUrl = `http://127.0.0.1:3000/content/music/animations/${targetItem.packId}/${targetItem.file}`;
+    console.log(`[Animation] Found "${animationId}". Loading CSS from: ${cssUrl}`);
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = cssUrl;
+    
+    link.onload = () => {
+      console.log(`✅ Successfully loaded and applied CSS for "${animationId}"`);
+    };
+    link.onerror = () => {
+      console.error(`❌ Failed to load CSS file for "${animationId}" from ${cssUrl}`);
+    };
+    
+    document.head.appendChild(link);
+    loadedAnimations.add(animationId);
+    return true;
+
+  } catch (e) {
+    console.error('❌ Critical error loading animation:', e);
+    return false;
   }
 }
 
@@ -156,10 +218,13 @@ function getAnimationDuration() {
   return 400; // Fallback
 }
 
-function applyTrackChangeAnimation() {
+async function applyTrackChangeAnimation() {
   const animation = currentSettings.trackChangeAnimation || 'none';
   if (animation === 'none') return false;
   
+  const loaded = await loadAnimationCSS(animation);
+  if(!loaded) return false;
+
   const duration = getAnimationDuration();
   
   widgetEl.classList.add(`exit-${animation}`);
@@ -181,7 +246,7 @@ function applyTrackChangeAnimation() {
 function applySettings(settings) {
   console.log("Applying settings in widget:", settings);
 
-  const { colors, font, effects } = settings.theme;
+  const { colors, font, effects, animationDuration } = settings.theme;
 
   console.log("🎨 Applying theme:", settings.theme);
 
@@ -198,6 +263,10 @@ function applySettings(settings) {
     if (colors.accent) {
       root.style.setProperty("--accent-color", colors.accent);
     }
+  }
+  if (animationDuration !== undefined) {
+    root.style.setProperty('--animation-duration', `${animationDuration}ms`);
+    console.log(`⏱️ Animation duration set to ${animationDuration}ms`);
   }
 
   if (font) {
@@ -315,6 +384,10 @@ function sendPing() {
   if (ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "PING", payload: "Ping from OBS Widget" }));
   }
+}
+
+if (currentSettings.animationDuration) {
+  root.style.setProperty('--animation-duration', `${currentSettings.animationDuration}ms`);
 }
 
 connect();

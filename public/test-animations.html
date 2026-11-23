@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест анимаций виджета</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .controls {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input[type="range"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    select option {
+      background: #333;
+      color: #fff;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      height: 40px;
+    }
+
+    .duration-display {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: #ff6b6b;
+      color: #fff;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .btn-primary:hover {
+      background: #ff5252;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .widget-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      perspective: 1000px;
+    }
+
+    /* === Базовые стили виджета === */
+    #widget {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 400px;
+      transition: opacity 300ms ease, transform 300ms ease;
+    }
+
+    #cover {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .text-wrapper {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .title {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .artist {
+      color: #a0a0a0;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+
+    /* === Отключение transition для анимаций === */
+    .exit-fade, .enter-fade,
+    .exit-slide-up, .enter-slide-up,
+    .exit-slide-right, .enter-slide-right,
+    .exit-pop, .enter-pop,
+    .exit-flip, .enter-flip {
+      transition: none !important;
+    }
+
+    /* === FADE === */
+    .exit-fade {
+      animation: fadeOut var(--animation-duration, 300ms) ease forwards;
+    }
+    .enter-fade {
+      animation: fadeIn var(--animation-duration, 300ms) ease forwards;
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* === SLIDE UP === */
+    .exit-slide-up {
+      animation: slideUpOut var(--animation-duration, 300ms) ease forwards;
+    }
+    .enter-slide-up {
+      animation: slideUpIn var(--animation-duration, 300ms) ease forwards;
+    }
+
+    @keyframes slideUpOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+    @keyframes slideUpIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === SLIDE RIGHT === */
+    .exit-slide-right {
+      animation: slideRightOut var(--animation-duration, 300ms) ease forwards;
+    }
+    .enter-slide-right {
+      animation: slideRightIn var(--animation-duration, 300ms) ease forwards;
+    }
+
+    @keyframes slideRightOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(30px); }
+    }
+    @keyframes slideRightIn {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* === POP (SCALE) === */
+    .exit-pop {
+      animation: popOut var(--animation-duration, 300ms) ease forwards;
+    }
+    .enter-pop {
+      animation: popIn var(--animation-duration, 300ms) ease forwards;
+    }
+
+    @keyframes popOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.8); }
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.8); }
+      70% { transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* === FLIP 3D === */
+    .exit-flip, .enter-flip {
+      animation-duration: var(--animation-duration, 300ms);
+      animation-timing-function: ease;
+      animation-fill-mode: forwards;
+      transform-style: preserve-3d;
+      transition: none !important;
+    }
+
+    .exit-flip {
+      animation-name: flipOut;
+    }
+
+    .enter-flip {
+      animation-name: flipIn;
+    }
+
+    @keyframes flipOut {
+      0% { 
+        transform: perspective(1000px) rotateY(0); 
+        opacity: 1; 
+      }
+      100% { 
+        transform: perspective(1000px) rotateY(90deg); 
+        opacity: 0; 
+      }
+    }
+
+    @keyframes flipIn {
+      0% { 
+        transform: perspective(1000px) rotateY(-90deg); 
+        opacity: 0; 
+      }
+      50% {
+        opacity: 0;
+      }
+      100% { 
+        transform: perspective(1000px) rotateY(0); 
+        opacity: 1; 
+      }
+    }
+
+    .info {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 40px;
+    }
+
+    .info h2 {
+      margin-bottom: 16px;
+      font-size: 1.5rem;
+    }
+
+    .info ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .info li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .info li:last-child {
+      border-bottom: none;
+    }
+
+    .info code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Тест анимаций виджета</h1>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="animation-select">Выберите анимацию:</label>
+        <select id="animation-select">
+          <option value="fade">Fade (Плавное появление)</option>
+          <option value="slide-up">Slide Up (Слайд вверх)</option>
+          <option value="slide-right">Slide Right (Слайд вправо)</option>
+          <option value="pop">Pop (Масштабирование)</option>
+          <option value="flip">Flip 3D (3D поворот)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="duration-range">Длительность анимации:</label>
+        <input type="range" id="duration-range" min="100" max="1000" value="300" step="50">
+        <div class="duration-display"><span id="duration-value">300</span>ms</div>
+      </div>
+
+      <button class="btn btn-primary" id="trigger-btn">
+        🎵 Сменить трек (запустить анимацию)
+      </button>
+    </div>
+
+    <div class="widget-container">
+      <div id="widget">
+        <img id="cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect fill='%23667eea' width='64' height='64'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='24'%3E🎵%3C/text%3E%3C/svg%3E" alt="Cover">
+        <div class="text-wrapper">
+          <div class="title" id="title">Test Track Name</div>
+          <div class="artist" id="artist">Test Artist</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <h2>📋 Описание анимаций</h2>
+      <ul>
+        <li><strong>Fade:</strong> Плавное исчезновение и появление. Классический эффект.</li>
+        <li><strong>Slide Up:</strong> Виджет уезжает вверх и появляется снизу.</li>
+        <li><strong>Slide Right:</strong> Виджет уезжает вправо и появляется слева.</li>
+        <li><strong>Pop:</strong> Виджет уменьшается и исчезает, затем увеличивается и появляется.</li>
+        <li><strong>Flip 3D:</strong> Виджет поворачивается вокруг оси Y на 90° (3D эффект).</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const tracks = [
+      { title: 'Grand Final', artist: 'Carpenter Brut', cover: '🎵' },
+      { title: 'Sightwaster', artist: 'Somali Yacht Club', cover: '🎸' },
+      { title: 'Sightwaster', artist: 'Somali Yacht Club', cover: '🎸' },
+      { title: 'Blood Machines', artist: 'Carpenter Brut', cover: '🎹' },
+      { title: 'Leather Teeth', artist: 'Carpenter Brut', cover: '🎺' },
+    ];
+
+    let currentTrackIndex = 0;
+    let isAnimating = false;
+
+    const widget = document.getElementById('widget');
+    const titleEl = document.getElementById('title');
+    const artistEl = document.getElementById('artist');
+    const coverEl = document.getElementById('cover');
+    const animationSelect = document.getElementById('animation-select');
+    const durationRange = document.getElementById('duration-range');
+    const durationValue = document.getElementById('duration-value');
+    const triggerBtn = document.getElementById('trigger-btn');
+
+    // Обновляем длительность
+    durationRange.addEventListener('input', (e) => {
+      const duration = e.target.value;
+      durationValue.textContent = duration;
+      widget.style.setProperty('--animation-duration', `${duration}ms`);
+    });
+
+    // Инициализируем CSS-переменную
+    widget.style.setProperty('--animation-duration', '300ms');
+
+    // Генерируем SVG для обложки
+    function generateCover(emoji) {
+      return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect fill='%23667eea' width='64' height='64'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='24'%3E${encodeURIComponent(emoji)}%3C/text%3E%3C/svg%3E`;
+    }
+
+    // Запуск анимации
+    triggerBtn.addEventListener('click', async () => {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      const animation = animationSelect.value;
+      const duration = parseInt(durationRange.value);
+
+      console.log(`🎬 Starting animation: ${animation} (${duration}ms)`);
+
+      // Фаза 1: Исчезновение
+      widget.classList.add(`exit-${animation}`);
+
+      await new Promise(resolve => setTimeout(resolve, duration));
+
+      // Обновляем данные
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      const track = tracks[currentTrackIndex];
+      
+      titleEl.textContent = track.title;
+      artistEl.textContent = track.artist;
+      coverEl.src = generateCover(track.cover);
+
+      console.log(`🎵 New track: ${track.artist} - ${track.title}`);
+
+      // Фаза 2: Появление
+      widget.classList.remove(`exit-${animation}`);
+      widget.classList.add(`enter-${animation}`);
+
+      await new Promise(resolve => setTimeout(resolve, duration));
+
+      // Очистка
+      widget.classList.remove(`enter-${animation}`);
+      isAnimating = false;
+
+      console.log('✅ Animation complete');
+    });
+  </script>
+</body>
+</html>

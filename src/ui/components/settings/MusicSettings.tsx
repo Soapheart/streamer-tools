@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { ExternalLinkButton } from '../ExternalLinkButton';
-import { MusicWidgetConfig, MusicCaptureMethod } from '../../../shared/types';
+import { MusicWidgetConfig, MusicCaptureMethod, ContentPack } from '../../../shared/types';
 import { WIDGET_URLS } from '../../../shared/widgetUrls';
 import { THEME_PRESETS, ThemePreset } from '../../../shared/themes';
 
@@ -29,6 +29,9 @@ export const MusicSettings: React.FC = () => {
     lastSeen: 0
   });
 
+  const [availableAnimations, setAvailableAnimations] = useState<ContentPack[]>([]);
+  const [loadingAnimations, setLoadingAnimations] = useState(true);
+
   useEffect(() => {
     // Получаем информацию о системе при загрузке компонента
     if(window.electronAPI?.getSystemInfo){
@@ -49,6 +52,31 @@ export const MusicSettings: React.FC = () => {
     const interval = setInterval(checkExtensionStatus, 3000); // Проверять каждые 3 секунды
   }, []);
 
+  // Загружаем список анимаций при монтировании
+  useEffect(() => {
+    const loadAnimations = async () => {
+      try {
+        const packs = await window.electronAPI.contentPacks.getPacks('music', 'animations');
+        setAvailableAnimations(packs);
+      } catch (error) {
+        console.error('Failed to load animations:', error);
+      } finally {
+        setLoadingAnimations(false);
+      }
+    };
+    
+    loadAnimations();
+  }, []);
+
+
+  const animationOptions = availableAnimations.flatMap(pack => 
+    pack.items.map(item => ({
+      value: item.id,
+      label: item.name,
+      packName: pack.name,
+      packId: pack.id,
+    }))
+  );
 
   const handleIntegrationChange = (selected: IntegrationKey) => {
     updateSettings('music', {
@@ -233,10 +261,45 @@ export const MusicSettings: React.FC = () => {
           className="w-full bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         >
           <option value="none">Без анимации</option>
-          <option value="fade">Плавное появление (Fade)</option>
-          <option value="slide">Выезд сбоку (Slide)</option>
-          <option value="scale">Увеличение (Scale)</option>
+        {/* Группируем по пакетам через optgroup */}
+        {availableAnimations.map(pack => (
+          <optgroup key={pack.id} label={pack.name}>
+            {pack.items.map(item => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </optgroup>
+        ))}
         </select>
+        {loadingAnimations && (
+          <p className="text-xs text-gray-500 mt-1">Загрузка анимаций...</p>
+        )}
+        {!loadingAnimations && availableAnimations.length === 0 && (
+          <p className="text-xs text-yellow-500 mt-1">
+            ⚠️ Не найдено ни одного пакета анимаций
+          </p>
+      )}
+      </div>
+      <div>
+        <label className="text-gray-200 block mb-2 font-medium">
+          Скорость анимации: {musicSettings.animationDuration}ms
+        </label>
+        <input
+          type="range"
+          min={100}
+          max={1500}
+          step={50}
+          value={musicSettings.animationDuration}
+          onChange={(e) => updateSettings('music', { 
+            animationDuration: parseInt(e.target.value) 
+          })}
+          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>Быстро (100ms)</span>
+          <span>Медленно (1500ms)</span>
+        </div>
       </div>
 
       {/* Тема оформления */}

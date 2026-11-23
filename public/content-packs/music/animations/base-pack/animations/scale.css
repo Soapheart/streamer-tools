@@ -1,0 +1,19 @@
+/* === SCALE === */
+.exit-scale {
+  animation: scaleOut var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+.enter-scale {
+  animation: scaleIn var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+
+@keyframes scaleOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.8); }
+}
+@keyframes scaleIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}

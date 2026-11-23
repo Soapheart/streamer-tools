@@ -23,7 +23,10 @@ export interface ElectronAPI {
       channel: string | null;
       isAuthorized: boolean;
     }>;
-  }
+  };
+  contentPacks: {
+    getPacks: (widget: string, contentType?: string) => Promise<ContentPack[]>;
+  };
 }
 
 declare global {

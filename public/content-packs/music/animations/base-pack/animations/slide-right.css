@@ -1,0 +1,18 @@
+/* === SLIDE RIGHT === */
+.exit-slide-right {
+  animation: slideRightOut var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+.enter-slide-right {
+  animation: slideRightIn var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+
+@keyframes slideRightOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+@keyframes slideRightIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}

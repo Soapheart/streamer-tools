@@ -38,4 +38,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       deleteReward: (rewardId: string) => ipcRenderer.invoke('twitch:delete-reward', rewardId),
       getChatStatus: () => ipcRenderer.invoke('twitch:get-chat-status'),
     },
+  contentPacks: {
+    getPacks: (widget: string, contentType?: string) => 
+      ipcRenderer.invoke('content-packs:get-packs', widget, contentType),
+  },
 });

@@ -57,7 +57,8 @@ export interface MusicWidgetConfig extends BaseWidgetConfig {
   allowVideoContent: boolean;
   hideOnPause: boolean;
   marqueeEnabled: boolean;
-  trackChangeAnimation: 'none' | 'fade' | 'slide' | 'scale';
+  trackChangeAnimation: string;
+  animationDuration: number;
 }
 
 export interface MusicTrack {
@@ -187,4 +188,28 @@ export interface ChatWidgetConfig extends BaseWidgetConfig {
   };
   
   filters: ChatFilters;
+}
+
+// Наборы контента
+export interface ContentPack {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  widget: string;
+  contentType: string;
+  free: boolean;
+  licensed: boolean;
+  items: ContentItem[];
+}
+
+export interface ContentItem {
+  id: string;
+  name: string;
+  file: string;
+  packId: string;
+  widget: string;
+  contentType: string;
+  preview?: string;
 }

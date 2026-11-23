@@ -1,0 +1,37 @@
+{
+  "id": "base-pack",
+  "name": "Базовые анимации",
+  "version": "1.0.0",
+  "author": "StreamTools",
+  "description": "Стандартный набор анимаций смены трека",
+  "widget": "music",
+  "contentType": "animations",
+  "free": true,
+  "items": [
+    {
+      "id": "fade",
+      "name": "Плавное появление",
+      "file": "fade.css"
+    },
+    {
+      "id": "scale",
+      "name": "Масштабирование",
+      "file": "scale.css"
+    },
+    {
+      "id": "slide-up",
+      "name": "Слайд вверх",
+      "file": "slide-up.css"
+    },
+    {
+      "id": "slide-right",
+      "name": "Слайд вправо",
+      "file": "slide-right.css"
+    },
+    {
+      "id": "flip-3d",
+      "name": "Переворот (3D)",
+      "file": "flip-3d.css"
+    }
+  ]
+}

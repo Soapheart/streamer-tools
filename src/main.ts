@@ -14,6 +14,7 @@ import { startWidgetServer } from "./server";
 
 // Сервисы и утилиты
 import { TwitchApiService } from "./core/services/twitchApiService";
+import { ContentPackManager } from './core/services/ContentPackManager';
 
 // IPC регистраторы
 import { registerSettingsHandlers } from "./transports/ipc/settings";
@@ -28,6 +29,10 @@ let mediaListenerProcess: ChildProcess | null = null;
 let storage: ElectronStoreAdapter;
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
+
+// Контент
+const contentPacksDir = path.join(process.cwd(), 'public', 'content-packs');
+const contentPackManager = new ContentPackManager(contentPacksDir);
 
 // === Реестр виджетов ===
 const musicAdapter = new MusicWidgetAdapter();
@@ -184,7 +189,10 @@ if (!gotTheLock) {
   app.whenReady().then(async () => {
     console.log("🚀 App is ready, creating window...");
     createWindow();
-    startWidgetServer(widgetAdapters);
+
+    await contentPackManager.initialize();
+    startWidgetServer(widgetAdapters, contentPackManager);
+
     startMediaListener();
 
 
@@ -256,6 +264,10 @@ if (!gotTheLock) {
   });
   
 }
+
+ipcMain.handle('content-packs:get-packs', (_event, widget: string, contentType?: string) => {
+  return contentPackManager.getPacksForWidget(widget, contentType);
+});
 
 app.on("before-quit", () => {
   isQuitting = true;

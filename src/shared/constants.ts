@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
         hideOnPause: false,
         marqueeEnabled: false,
         trackChangeAnimation: 'fade',
+        animationDuration: 300,
     },
     chat: { 
         enabled: true,

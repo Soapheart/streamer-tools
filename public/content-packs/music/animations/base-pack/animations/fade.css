@@ -1,0 +1,18 @@
+/* === FADE === */
+.exit-fade {
+  animation: fadeOut var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+.enter-fade {
+  animation: fadeIn var(--animation-duration) ease forwards;
+  transition: none !important;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
